@@ -60,3 +60,25 @@
 - Replace mock with Gemini extract/map pipeline
 - Real answer-sheet page rasters + validated bboxes
 - Deploy
+
+## Phase 3 — AI foundation (current)
+
+**Goal:** Server-only Gemini client, Zod schemas, and prompts ready for the pipeline.
+
+**Done:**
+
+- Dependencies: `@google/genai`, `zod`, `pdfjs-dist`, `sharp`, `@tanstack/react-query`
+- `.env.example` — `GEMINI_API_KEY` (+ optional `GEMINI_MODEL`)
+- `next.config.ts` — `serverExternalPackages: ['sharp', 'pdfjs-dist', '@google/genai']`
+- `lib/ai/`:
+  - `gemini.ts` — `GoogleGenAI` client, `generateStructuredJson` / `generateStructuredJsonFromImages`
+  - `schemas.ts` — Zod schemas for extract / map / grade + `zodToGeminiJsonSchema`
+  - `types.ts`, `errors.ts`, `index.ts`
+  - `prompts/` — extract-questions, extract-answers, map-answers, grade-answers
+- Default model: `gemini-2.5-flash` (override with `GEMINI_MODEL`)
+
+**Next:**
+
+- Document rasterizer (`lib/documents/`) + page image API
+- In-memory assessment store + pipeline orchestration
+- Wire upload → extracting → mapping to real API
