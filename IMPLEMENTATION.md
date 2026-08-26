@@ -213,3 +213,12 @@
 - Grading uses derived maxScore + optional page images; no hard fallback to 1/1
 - Viewer: grouped question panels, “Not counted” badge, Obtained X/Y summary
 - Tests: `groups.test.ts` + updated fixtures / normalize / pipeline
+
+## Phase 12 — Declutter mapping UI + loading polish
+
+**Done:**
+
+- Loading: horizontal stage stepper on desktop; vertical on mobile; smoothed progress bar
+- Mapping: single compact Obtained strip; ~40/60 question/sheet split
+- Shorter group headers; collapsed cards by default; tighter card padding
+- Unmatched panel collapsed by default with 1-line previews

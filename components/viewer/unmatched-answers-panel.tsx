@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
+
 import { StatusBadge } from "@/components/viewer/score-badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import type { StudentAnswer } from "@/lib/assessment/types"
 import { cn } from "@/lib/utils"
 
@@ -13,29 +15,45 @@ type UnmatchedAnswersPanelProps = {
 
 /**
  * Surfaces answer blocks that could not be mapped to any question.
- * Selecting one highlights its regions on the answer sheet.
+ * Collapsed by default to keep the question list readable.
  */
 export function UnmatchedAnswersPanel({
   answers,
   selectedIndex,
   onSelect,
 }: UnmatchedAnswersPanelProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
   if (answers.length === 0) return null
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl bg-background/50 shadow-sm ring-1 ring-black/5">
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <h2 className="text-sm font-semibold text-foreground sm:text-[15px]">
-          Unmatched answers{" "}
+    <div className="shrink-0 overflow-hidden rounded-2xl bg-background/50 shadow-sm ring-1 ring-black/5">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left sm:px-4"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+      >
+        <h2 className="text-sm font-semibold text-foreground">
+          Unmatched{" "}
           <span className="font-normal text-muted-foreground">
             ({answers.length})
           </span>
         </h2>
-        <StatusBadge status="unmatched" />
-      </div>
+        <div className="flex items-center gap-1.5">
+          <StatusBadge status="unmatched" />
+          <ChevronDown
+            className={cn(
+              "size-4 text-muted-foreground transition-transform",
+              isOpen && "rotate-180"
+            )}
+            aria-hidden
+          />
+        </div>
+      </button>
 
-      <ScrollArea className="min-h-0 max-h-48 flex-1 px-3 pb-3 sm:max-h-56">
-        <ul className="flex flex-col gap-2 pr-2">
+      {isOpen ? (
+        <ul className="flex max-h-36 flex-col gap-1.5 overflow-y-auto px-2.5 pb-2.5 sm:px-3">
           {answers.map((answer, index) => {
             const isSelected = selectedIndex === index
             const preview =
@@ -43,8 +61,8 @@ export function UnmatchedAnswersPanel({
               "(No transcription — region only)"
             const pageHint =
               answer.regions.length > 0
-                ? `Page ${answer.regions.map((r) => r.page).join(", ")}`
-                : "No region"
+                ? `p.${answer.regions.map((r) => r.page).join(",")}`
+                : ""
 
             return (
               <li key={`unmatched-${index}`}>
@@ -52,21 +70,23 @@ export function UnmatchedAnswersPanel({
                   type="button"
                   onClick={() => onSelect(index)}
                   className={cn(
-                    "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
+                    "w-full rounded-lg border px-2.5 py-2 text-left transition-colors",
                     isSelected
                       ? "border-brand/40 bg-highlight/10 ring-1 ring-brand/20"
                       : "border-border/60 bg-background hover:bg-muted/40"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold text-foreground">
-                      Unmatched #{index + 1}
+                      #{index + 1}
+                      {pageHint ? (
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          {pageHint}
+                        </span>
+                      ) : null}
                     </p>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">
-                      {pageHint}
-                    </span>
                   </div>
-                  <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-muted-foreground">
                     {preview}
                   </p>
                 </button>
@@ -74,7 +94,7 @@ export function UnmatchedAnswersPanel({
             )
           })}
         </ul>
-      </ScrollArea>
+      ) : null}
     </div>
   )
 }

@@ -18,7 +18,7 @@ type Selection =
 
 /**
  * Question ↔ answer mapping viewer.
- * Desktop: side-by-side. Mobile: Questions / Answer Sheet tabs.
+ * Desktop: side-by-side (sheet wider). Mobile: Questions / Answer Sheet tabs.
  */
 export function MappingScreen({ assessment }: MappingScreenProps) {
   const defaultQuestionId =
@@ -33,9 +33,8 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
         ? { type: "unmatched", index: 0 }
         : null
   )
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(defaultQuestionId ? [defaultQuestionId] : [])
-  )
+  // Start collapsed — feedback opens only when the user expands.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
   const [zoom, setZoom] = useState(1)
   const [mobileTab, setMobileTab] = useState("questions")
 
@@ -76,7 +75,6 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
 
   const selectQuestion = (id: string) => {
     setSelection({ type: "question", id })
-    setExpandedIds((prev) => new Set(prev).add(id))
     const item = assessment.items.find((i) => i.question.id === id)
     const firstPage = item?.answer?.regions[0]?.page
     if (firstPage) setPage(firstPage)
@@ -107,7 +105,7 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
   }
 
   const questionsColumn = (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="min-h-0 flex-1">
         <QuestionPanel
           items={assessment.items}
@@ -145,7 +143,7 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       {assessment.summary.paperMaxScore > 0 ? (
-        <div className="mb-3 shrink-0 rounded-2xl bg-background/70 px-4 py-3 shadow-sm ring-1 ring-black/5">
+        <div className="mb-2 flex shrink-0 flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-xl bg-background/70 px-3 py-2 shadow-sm ring-1 ring-black/5">
           <p className="text-sm font-semibold tabular-nums text-foreground">
             Obtained{" "}
             <span className="text-cta">
@@ -157,7 +155,7 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
             </span>
           </p>
           {assessment.summary.groupScores.length > 0 ? (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="min-w-0 truncate text-xs text-muted-foreground">
               {assessment.summary.groupScores
                 .map((g) => {
                   const group = assessment.groups.find(
@@ -172,7 +170,7 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
         </div>
       ) : null}
 
-      <div className="hidden min-h-0 flex-1 gap-3 lg:grid lg:grid-cols-2">
+      <div className="hidden min-h-0 flex-1 gap-3 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {questionsColumn}
         {answerPanel}
       </div>

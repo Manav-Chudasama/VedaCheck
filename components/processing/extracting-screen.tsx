@@ -1,6 +1,7 @@
 "use client"
 
-import { AlertCircle } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { AlertCircle, Check } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +18,15 @@ const VISIBLE_STAGES: ProcessingStage[] = [
   "grading",
 ]
 
+/** Short labels for the desktop horizontal stepper. */
+const SHORT_STAGE_LABELS: Record<(typeof VISIBLE_STAGES)[number], string> = {
+  reading: "Reading",
+  extracting_questions: "Questions",
+  reading_answers: "Answers",
+  mapping: "Mapping",
+  grading: "Preparing",
+}
+
 type ExtractingScreenProps = {
   stage?: ProcessingStage
   progress?: number
@@ -27,7 +37,7 @@ type ExtractingScreenProps = {
 
 /**
  * Loading / extracting view with staged pipeline progress.
- * Stars blink; stage list + progress update from status polling.
+ * Desktop: horizontal stepper. Mobile: vertical list.
  */
 export function ExtractingScreen({
   stage = "reading",
@@ -37,16 +47,49 @@ export function ExtractingScreen({
   onRetry,
 }: ExtractingScreenProps) {
   const displayLabel = label ?? STAGE_LABELS[stage] ?? "Extracting"
-  const clampedProgress = Math.min(100, Math.max(0, progress))
+  const targetProgress = Math.min(100, Math.max(0, progress))
+  const [displayProgress, setDisplayProgress] = useState(targetProgress)
+  const displayProgressRef = useRef(targetProgress)
+
+  useEffect(() => {
+    displayProgressRef.current = displayProgress
+  }, [displayProgress])
+
+  useEffect(() => {
+    const start = displayProgressRef.current
+    const delta = targetProgress - start
+    if (Math.abs(delta) < 0.5) {
+      setDisplayProgress(targetProgress)
+      displayProgressRef.current = targetProgress
+      return
+    }
+    const durationMs = 700
+    const startedAt = performance.now()
+    let frame = 0
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - startedAt) / durationMs)
+      const eased = 1 - (1 - t) ** 3
+      const next = start + delta * eased
+      displayProgressRef.current = next
+      setDisplayProgress(next)
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [targetProgress])
+
+  const clampedProgress = Math.round(displayProgress)
   const activeIndex = VISIBLE_STAGES.indexOf(
     stage === "uploading"
       ? "reading"
       : stage === "ready"
         ? "grading"
         : stage === "failed"
-          ? VISIBLE_STAGES[VISIBLE_STAGES.length - 1]
+          ? VISIBLE_STAGES[VISIBLE_STAGES.length - 1]!
           : stage
   )
+  const resolvedActiveIndex = activeIndex < 0 ? 0 : activeIndex
 
   if (error) {
     return (
@@ -80,7 +123,7 @@ export function ExtractingScreen({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background shadow-[0_16px_48px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
-        <div className="flex w-full max-w-md flex-col items-center gap-6 text-center sm:gap-7">
+        <div className="flex w-full max-w-md flex-col items-center gap-6 text-center sm:gap-7 lg:max-w-3xl">
           <ExtractingSparks className="h-[7.5rem] w-auto sm:h-[8.4rem]" />
 
           <div className="space-y-1.5">
@@ -93,7 +136,7 @@ export function ExtractingScreen({
             </p>
           </div>
 
-          <div className="w-full space-y-3">
+          <div className="w-full max-w-md space-y-3">
             <div
               className="h-2 overflow-hidden rounded-full bg-muted"
               role="progressbar"
@@ -103,8 +146,8 @@ export function ExtractingScreen({
               aria-label="Processing progress"
             >
               <div
-                className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out"
-                style={{ width: `${clampedProgress}%` }}
+                className="h-full rounded-full bg-brand transition-[width] duration-150 ease-out"
+                style={{ width: `${displayProgress}%` }}
               />
             </div>
             <p className="text-xs font-medium tabular-nums text-muted-foreground">
@@ -112,33 +155,59 @@ export function ExtractingScreen({
             </p>
           </div>
 
-          <ol className="w-full space-y-2 text-left">
+          {/* Mobile: vertical list */}
+          <ol className="w-full max-w-md space-y-2 text-left lg:hidden">
+            {VISIBLE_STAGES.map((step, index) => (
+              <StageListItem
+                key={step}
+                index={index}
+                label={STAGE_LABELS[step]}
+                isDone={resolvedActiveIndex > index}
+                isCurrent={resolvedActiveIndex === index}
+              />
+            ))}
+          </ol>
+
+          {/* Desktop: horizontal stepper */}
+          <ol className="hidden w-full items-start justify-between gap-1 lg:flex">
             {VISIBLE_STAGES.map((step, index) => {
-              const isDone = activeIndex > index
-              const isCurrent = activeIndex === index
+              const isDone = resolvedActiveIndex > index
+              const isCurrent = resolvedActiveIndex === index
+              const isLast = index === VISIBLE_STAGES.length - 1
               return (
                 <li
                   key={step}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
-                    isCurrent && "bg-highlight/10 text-foreground",
-                    isDone && "text-muted-foreground",
-                    !isDone && !isCurrent && "text-muted-foreground/70"
-                  )}
+                  className="relative flex min-w-0 flex-1 flex-col items-center gap-2"
                 >
+                  {!isLast ? (
+                    <span
+                      className={cn(
+                        "absolute top-3 left-[calc(50%+14px)] right-[calc(-50%+14px)] h-0.5",
+                        isDone ? "bg-brand/50" : "bg-muted"
+                      )}
+                      aria-hidden
+                    />
+                  ) : null}
                   <span
                     className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
-                      isCurrent && "bg-brand text-white",
-                      isDone && "bg-muted text-foreground",
-                      !isDone && !isCurrent && "bg-muted/80 text-muted-foreground"
+                      "relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors",
+                      isCurrent && "bg-brand text-white ring-4 ring-brand/15",
+                      isDone && "bg-brand text-white",
+                      !isDone && !isCurrent && "bg-muted text-muted-foreground"
                     )}
                     aria-hidden
                   >
-                    {isDone ? "✓" : index + 1}
+                    {isDone ? <Check className="size-3.5" strokeWidth={3} /> : index + 1}
                   </span>
-                  <span className={cn(isCurrent && "font-semibold")}>
-                    {STAGE_LABELS[step]}
+                  <span
+                    className={cn(
+                      "max-w-[5.5rem] text-center text-xs leading-snug",
+                      isCurrent && "font-semibold text-foreground",
+                      isDone && "text-muted-foreground",
+                      !isDone && !isCurrent && "text-muted-foreground/70"
+                    )}
+                  >
+                    {SHORT_STAGE_LABELS[step]}
                   </span>
                 </li>
               )
@@ -147,6 +216,42 @@ export function ExtractingScreen({
         </div>
       </div>
     </div>
+  )
+}
+
+function StageListItem({
+  index,
+  label,
+  isDone,
+  isCurrent,
+}: {
+  index: number
+  label: string
+  isDone: boolean
+  isCurrent: boolean
+}) {
+  return (
+    <li
+      className={cn(
+        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+        isCurrent && "bg-highlight/10 text-foreground",
+        isDone && "text-muted-foreground",
+        !isDone && !isCurrent && "text-muted-foreground/70"
+      )}
+    >
+      <span
+        className={cn(
+          "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+          isCurrent && "bg-brand text-white",
+          isDone && "bg-muted text-foreground",
+          !isDone && !isCurrent && "bg-muted/80 text-muted-foreground"
+        )}
+        aria-hidden
+      >
+        {isDone ? "✓" : index + 1}
+      </span>
+      <span className={cn(isCurrent && "font-semibold")}>{label}</span>
+    </li>
   )
 }
 

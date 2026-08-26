@@ -39,29 +39,36 @@ export function QuestionCard({
         }
       }}
       className={cn(
-        "w-full rounded-2xl border bg-background px-3.5 py-3 text-left shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/30",
+        "w-full rounded-xl border bg-background px-2.5 py-2 text-left shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/30",
         isSelected
           ? "border-question-active ring-1 ring-question-active/40"
           : "border-border/80 hover:border-border"
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex shrink-0 items-center gap-1 pt-0.5">
-          <div className="flex size-7 items-center justify-center rounded-full bg-cta text-[11px] font-semibold text-white">
+      <div className="flex items-start gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
+          <div className="flex size-6 items-center justify-center rounded-full bg-cta text-[10px] font-semibold text-white">
             {main}
           </div>
           {part ? (
-            <span className="text-xs font-semibold text-foreground">{part}.</span>
+            <span className="text-[11px] font-semibold text-foreground">
+              {part}.
+            </span>
           ) : null}
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
-            <p className="min-w-0 flex-1 text-sm leading-snug font-medium text-foreground">
+          <div className="flex items-start gap-1.5">
+            <p
+              className={cn(
+                "min-w-0 flex-1 text-xs leading-snug font-medium text-foreground sm:text-sm",
+                !isExpanded && "line-clamp-2"
+              )}
+            >
               {question.text}
             </p>
 
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1">
               {status === "answered" &&
               typeof score === "number" &&
               typeof maxScore === "number" ? (
@@ -70,7 +77,7 @@ export function QuestionCard({
               {status === "answered" &&
               question.countedTowardTotal === false &&
               typeof score === "number" ? (
-                <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-muted px-2 text-[10px] font-medium text-muted-foreground">
+                <span className="inline-flex h-5 shrink-0 items-center rounded-md bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
                   Not counted
                 </span>
               ) : null}
@@ -79,7 +86,7 @@ export function QuestionCard({
               ) : null}
               <button
                 type="button"
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label={isExpanded ? "Collapse" : "Expand"}
                 onClick={(event) => {
                   event.stopPropagation()
@@ -88,7 +95,7 @@ export function QuestionCard({
               >
                 <ChevronDown
                   className={cn(
-                    "size-4 transition-transform",
+                    "size-3.5 transition-transform",
                     isExpanded && "rotate-180"
                   )}
                 />
@@ -97,17 +104,17 @@ export function QuestionCard({
           </div>
 
           {isExpanded && feedback ? (
-            <div className="mt-3 rounded-2xl bg-file-chip px-3.5 py-3">
-              <p className="text-sm font-semibold text-foreground">AI Feedback</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-2 rounded-xl bg-file-chip px-2.5 py-2">
+              <p className="text-xs font-semibold text-foreground">AI Feedback</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                 {feedback}
               </p>
             </div>
           ) : null}
 
           {isExpanded && status === "unanswered" ? (
-            <div className="mt-3 rounded-2xl bg-file-chip px-3.5 py-3">
-              <p className="text-sm text-muted-foreground">
+            <div className="mt-2 rounded-xl bg-file-chip px-2.5 py-2">
+              <p className="text-xs text-muted-foreground">
                 No answer was found for this question on the sheet.
               </p>
             </div>
@@ -121,5 +128,5 @@ export function QuestionCard({
 function splitQuestionNumber(number: string): { main: string; part?: string } {
   const match = number.match(/^(\d+)\s*\(?([a-zA-Z])\)?$/)
   if (!match) return { main: number }
-  return { main: match[1], part: match[2].toLowerCase() }
+  return { main: match[1]!, part: match[2]!.toLowerCase() }
 }
