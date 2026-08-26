@@ -173,5 +173,20 @@
 
 **Next:**
 
-- Unit tests (bbox, normalize, schemas, mocked Gemini)
 - Deploy + `GEMINI_API_KEY` in hosting
+- Manual end-to-end smoke with real QP + answer sheet
+
+## Phase 9 — Unit tests (mocked Gemini)
+
+**Goal:** Bun tests around bbox, normalize, schemas, pipeline — no live API.
+
+**Done:**
+
+- `bun test` script in `package.json`
+- Fixtures: `lib/assessment/fixtures/gemini-responses.ts`
+- `bbox.test.ts`, `normalize.test.ts`, `map-answers.test.ts`
+- `lib/ai/schemas.test.ts`
+- `pipeline.test.ts` — mocked `PipelineAiDeps` + real image rasterize
+- **31 passing**
+
+**Ready for manual test:** yes (set `GEMINI_API_KEY`, `bun dev`, upload QP + answer sheet).
