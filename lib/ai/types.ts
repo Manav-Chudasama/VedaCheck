@@ -1,10 +1,10 @@
 /**
- * Internal AI DTOs — raw Gemini pipeline shapes before normalization
+ * Internal AI DTOs — raw model pipeline shapes before normalization
  * into AssessmentViewModel (lib/assessment/types.ts).
  */
 
-/** Page image payload sent to Gemini (base64, no data-URL prefix). */
-export type GeminiImagePart = {
+/** Page image payload sent to the vision model (base64, no data-URL prefix). */
+export type AiImagePart = {
   mimeType: string
   /** Raw bytes or base64 string */
   data: Buffer | Uint8Array | string
@@ -24,7 +24,7 @@ export type ExtractQuestionsResultDto = {
 }
 
 /** Bounding box as [x1, y1, x2, y2], normalized 0–1 relative to the page. */
-export type BBoxDto = [number, number, number, number]
+export type BBoxDto = number[]
 
 export type AnswerRegionDto = {
   /** 1-based page index on the answer sheet */

@@ -148,16 +148,24 @@ export function normalizeAndValidateBbox(
  * Drops invalid pages / empty boxes rather than rendering blindly.
  */
 export function normalizeAnswerRegions(
-  regions: Array<{ page: number; bbox: BBox }>,
+  regions: Array<{ page: number; bbox: number[] | BBox }>,
   pageSizes: Map<number, PageSize>
 ): AnswerRegion[] {
   const result: AnswerRegion[] = []
 
   for (const region of regions) {
     if (!Number.isInteger(region.page) || region.page < 1) continue
+    if (!Array.isArray(region.bbox) || region.bbox.length !== 4) continue
+
+    const raw: BBox = [
+      region.bbox[0]!,
+      region.bbox[1]!,
+      region.bbox[2]!,
+      region.bbox[3]!,
+    ]
 
     const pageSize = pageSizes.get(region.page)
-    const bbox = normalizeAndValidateBbox(region.bbox, pageSize)
+    const bbox = normalizeAndValidateBbox(raw, pageSize)
     if (!bbox) continue
 
     // If we know page count via map, reject pages outside the sheet.

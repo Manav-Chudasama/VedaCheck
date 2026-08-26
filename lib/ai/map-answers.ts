@@ -1,4 +1,4 @@
-import { generateStructuredJson } from "@/lib/ai/gemini"
+import { generateStructuredJson } from "@/lib/ai/openai"
 import {
   MAP_ANSWERS_SYSTEM,
   buildMapAnswersPrompt,
@@ -16,7 +16,7 @@ const TRANSCRIPTION_PREVIEW_CHARS = 400
  * LLM second-pass mapping for ambiguous / label-less answers.
  * Text-only (no images) — uses question text + answer transcriptions.
  */
-export async function mapAnswersWithGemini(
+export async function mapAnswersWithOpenAi(
   questions: ExtractedQuestionDto[],
   answers: ExtractedAnswerDto[]
 ): Promise<MapAnswersResultDto> {
@@ -36,8 +36,9 @@ export async function mapAnswersWithGemini(
 
   return generateStructuredJson({
     schema: mapAnswersResultSchema,
+    schemaName: "map_answers",
     systemInstruction: MAP_ANSWERS_SYSTEM,
-    contents: buildMapAnswersPrompt({
+    userText: buildMapAnswersPrompt({
       questions: questions.map((q) => ({
         number: q.number,
         text: truncate(q.text, 500),

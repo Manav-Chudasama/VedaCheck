@@ -4,7 +4,7 @@ import {
   fixtureExtractAnswers,
   fixtureExtractQuestions,
   fixtureGrades,
-} from "@/lib/assessment/fixtures/gemini-responses"
+} from "@/lib/assessment/fixtures/ai-responses"
 import { mapAnswersDeterministic } from "@/lib/assessment/map-answers"
 import {
   normalizeAssessment,

@@ -189,4 +189,12 @@
 - `pipeline.test.ts` — mocked `PipelineAiDeps` + real image rasterize
 - **31 passing**
 
-**Ready for manual test:** yes (set `GEMINI_API_KEY`, `bun dev`, upload QP + answer sheet).
+## Phase 10 — Switch to OpenAI gpt-4o
+
+**Done:**
+
+- Removed `@google/genai`; added `openai`
+- `lib/ai/openai.ts` — `chat.completions.parse` + `zodResponseFormat`
+- Renamed pipeline entrypoints to `createOpenAiPipelineAiDeps` / `runOpenAiAssessmentPipeline`
+- Env: `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`, default `gpt-4o`)
+- Updated `AGENTS.md` §3.1 and related Gemini references

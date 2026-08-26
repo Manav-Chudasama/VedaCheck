@@ -36,7 +36,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         inter.variable
       )}
     >
-      <body className="flex h-svh flex-col overflow-hidden">
+      <body
+        className="flex h-svh flex-col overflow-hidden"
+        suppressHydrationWarning
+      >
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

@@ -9,7 +9,7 @@ import {
   fixtureExtractAnswers,
   fixtureExtractQuestions,
   fixtureMapAnswersLlm,
-} from "@/lib/assessment/fixtures/gemini-responses"
+} from "@/lib/assessment/fixtures/ai-responses"
 
 describe("canonicalizeQuestionLabel", () => {
   test("normalizes common label variants", () => {

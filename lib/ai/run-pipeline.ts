@@ -1,11 +1,11 @@
-import { createGeminiPipelineAiDeps } from "@/lib/ai/pipeline-deps"
+import { createOpenAiPipelineAiDeps } from "@/lib/ai/pipeline-deps"
 import {
   runAssessmentPipeline,
   type PipelineDocument,
   type RunAssessmentPipelineOptions,
 } from "@/lib/assessment/pipeline"
 
-export type RunGeminiAssessmentOptions = {
+export type RunOpenAiAssessmentOptions = {
   questionPaper: PipelineDocument
   answerSheet: PipelineDocument
   enableGrading?: boolean
@@ -14,13 +14,13 @@ export type RunGeminiAssessmentOptions = {
 }
 
 /**
- * Run the assessment pipeline with the default Gemini-backed AI deps.
+ * Run the assessment pipeline with the default OpenAI-backed AI deps.
  */
-export async function runGeminiAssessmentPipeline(
+export async function runOpenAiAssessmentPipeline(
   jobId: string,
-  options: RunGeminiAssessmentOptions
+  options: RunOpenAiAssessmentOptions
 ): Promise<void> {
-  const ai = createGeminiPipelineAiDeps({
+  const ai = createOpenAiPipelineAiDeps({
     enableGrading: options.enableGrading,
     enableLlmMapping: options.enableLlmMapping,
     onlyWhenAmbiguous: options.onlyWhenAmbiguous,

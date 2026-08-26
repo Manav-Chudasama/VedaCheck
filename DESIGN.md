@@ -38,7 +38,7 @@ From `Question - Answer mapping screen.svg` / `.png` (+ phone toggles):
 - Question cards: index circle, text, score pill (full / partial / zero), expand for AI feedback; selected = `question-active` border
 - Answer sheet: zoom + pagination toolbar, stacked pages, green `bbox` highlight + `Q#` tag
 - Tokens: `--score-full*`, `--score-partial*`, `--score-zero*`, `--bbox`, `--bbox-fill`, `--question-active`, `--answer-paper`
-- UI currently driven by `lib/assessment/mock-assessment.ts` until the Gemini pipeline lands
+- Mapping viewer uses live OpenAI pipeline results (mock fixture retained for reference only)
 
 ## Upload screen
 

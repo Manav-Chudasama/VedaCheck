@@ -13,9 +13,9 @@ import {
   fixtureInvalidExtractAnswers,
   fixtureInvalidExtractQuestions,
   fixtureMapAnswersLlm,
-} from "@/lib/assessment/fixtures/gemini-responses"
+} from "@/lib/assessment/fixtures/ai-responses"
 
-describe("Gemini Zod schemas", () => {
+describe("AI Zod schemas", () => {
   test("accepts valid extract-questions fixture", () => {
     const parsed = extractQuestionsResultSchema.safeParse(
       fixtureExtractQuestions

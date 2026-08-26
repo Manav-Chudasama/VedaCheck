@@ -1,49 +1,49 @@
-/** Structured errors for Gemini / AI pipeline failures. */
+/** Structured errors for OpenAI / AI pipeline failures. */
 
-export class GeminiConfigError extends Error {
-  readonly code = "GEMINI_CONFIG" as const
+export class AiConfigError extends Error {
+  readonly code = "AI_CONFIG" as const
 
-  constructor(message = "GEMINI_API_KEY is not configured") {
+  constructor(message = "OPENAI_API_KEY is not configured") {
     super(message)
-    this.name = "GeminiConfigError"
+    this.name = "AiConfigError"
   }
 }
 
-export class GeminiEmptyResponseError extends Error {
-  readonly code = "GEMINI_EMPTY_RESPONSE" as const
+export class AiEmptyResponseError extends Error {
+  readonly code = "AI_EMPTY_RESPONSE" as const
 
-  constructor(message = "Gemini returned an empty response") {
+  constructor(message = "OpenAI returned an empty response") {
     super(message)
-    this.name = "GeminiEmptyResponseError"
+    this.name = "AiEmptyResponseError"
   }
 }
 
-export class GeminiInvalidJsonError extends Error {
-  readonly code = "GEMINI_INVALID_JSON" as const
+export class AiInvalidJsonError extends Error {
+  readonly code = "AI_INVALID_JSON" as const
 
   constructor(
-    message = "Gemini response was not valid JSON",
+    message = "OpenAI response was not valid JSON",
     readonly raw?: string
   ) {
     super(message)
-    this.name = "GeminiInvalidJsonError"
+    this.name = "AiInvalidJsonError"
   }
 }
 
-export class GeminiSchemaValidationError extends Error {
-  readonly code = "GEMINI_SCHEMA_VALIDATION" as const
+export class AiSchemaValidationError extends Error {
+  readonly code = "AI_SCHEMA_VALIDATION" as const
 
   constructor(
-    message = "Gemini response failed schema validation",
+    message = "OpenAI response failed schema validation",
     readonly issues?: unknown
   ) {
     super(message)
-    this.name = "GeminiSchemaValidationError"
+    this.name = "AiSchemaValidationError"
   }
 }
 
-export class GeminiApiError extends Error {
-  readonly code = "GEMINI_API" as const
+export class AiApiError extends Error {
+  readonly code = "AI_API" as const
 
   constructor(
     message: string,
@@ -51,6 +51,6 @@ export class GeminiApiError extends Error {
     options?: { cause?: unknown }
   ) {
     super(message, options)
-    this.name = "GeminiApiError"
+    this.name = "AiApiError"
   }
 }

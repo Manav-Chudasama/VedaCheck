@@ -1,6 +1,6 @@
 import type { AssessmentViewModel } from "@/lib/assessment/types"
 
-/** Static fixture for mapping-screen UI until Gemini pipeline is wired. */
+/** Static fixture kept for UI reference; live flow uses the OpenAI pipeline. */
 export const mockAssessment: AssessmentViewModel = {
   pages: [
     { page: 1, label: "Page 1" },

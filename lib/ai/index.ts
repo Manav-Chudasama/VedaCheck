@@ -1,23 +1,23 @@
 /**
- * Server-only Gemini AI layer.
- * Do not import from client components — keeps GEMINI_API_KEY off the browser bundle.
+ * Server-only OpenAI AI layer.
+ * Do not import from client components — keeps OPENAI_API_KEY off the browser bundle.
  */
 
 export {
-  DEFAULT_GEMINI_MODEL,
+  DEFAULT_OPENAI_MODEL,
   generateStructuredJson,
   generateStructuredJsonFromImages,
-  getGeminiClient,
-  getGeminiModel,
-  toGeminiImagePart,
-} from "@/lib/ai/gemini"
+  getOpenAiClient,
+  getOpenAiModel,
+  toDataUrl,
+} from "@/lib/ai/openai"
 
 export {
-  GeminiApiError,
-  GeminiConfigError,
-  GeminiEmptyResponseError,
-  GeminiInvalidJsonError,
-  GeminiSchemaValidationError,
+  AiApiError,
+  AiConfigError,
+  AiEmptyResponseError,
+  AiInvalidJsonError,
+  AiSchemaValidationError,
 } from "@/lib/ai/errors"
 
 export {
@@ -31,31 +31,31 @@ export {
   gradedAnswerSchema,
   mapAnswersResultSchema,
   mappedAnswerSchema,
-  zodToGeminiJsonSchema,
+  zodToJsonSchema,
 } from "@/lib/ai/schemas"
 
-export { pageRastersToGeminiImages } from "@/lib/ai/page-images"
+export { pageRastersToAiImages } from "@/lib/ai/page-images"
 export { extractQuestionsFromPages } from "@/lib/ai/extract-questions"
 export { extractAnswersFromPages } from "@/lib/ai/extract-answers"
-export { mapAnswersWithGemini } from "@/lib/ai/map-answers"
-export { gradeAnswersWithGemini } from "@/lib/ai/grade-answers"
+export { mapAnswersWithOpenAi } from "@/lib/ai/map-answers"
+export { gradeAnswersWithOpenAi } from "@/lib/ai/grade-answers"
 export {
-  createGeminiPipelineAiDeps,
-  type CreateGeminiPipelineAiDepsOptions,
+  createOpenAiPipelineAiDeps,
+  type CreateOpenAiPipelineAiDepsOptions,
 } from "@/lib/ai/pipeline-deps"
 export {
-  runGeminiAssessmentPipeline,
-  type RunGeminiAssessmentOptions,
+  runOpenAiAssessmentPipeline,
+  type RunOpenAiAssessmentOptions,
 } from "@/lib/ai/run-pipeline"
 
 export type {
+  AiImagePart,
   AnswerRegionDto,
   BBoxDto,
   ExtractAnswersResultDto,
   ExtractedAnswerDto,
   ExtractedQuestionDto,
   ExtractQuestionsResultDto,
-  GeminiImagePart,
   GradeAnswersResultDto,
   GradedAnswerDto,
   MapAnswersResultDto,

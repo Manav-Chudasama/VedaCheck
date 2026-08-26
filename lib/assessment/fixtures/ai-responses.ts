@@ -108,7 +108,7 @@ export const fixtureGrades: GradeAnswersResultDto = {
   overallFeedback: "Strong answers overall; 11(b) was left blank.",
 }
 
-/** Invalid Gemini-shaped payloads for schema rejection tests. */
+/** Invalid AI-shaped payloads for schema rejection tests. */
 export const fixtureInvalidExtractQuestions = {
   questions: [{ number: "", text: "Missing number", order: 0 }],
 }

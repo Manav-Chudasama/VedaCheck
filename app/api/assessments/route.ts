@@ -1,14 +1,14 @@
 import { after, NextResponse } from "next/server"
 
-import { runGeminiAssessmentPipeline } from "@/lib/ai/run-pipeline"
-import { GeminiConfigError } from "@/lib/ai/errors"
+import { AiConfigError } from "@/lib/ai/errors"
+import { runOpenAiAssessmentPipeline } from "@/lib/ai/run-pipeline"
 import { createAssessmentJob } from "@/lib/assessment/store"
 import {
   parseAssessmentUploadForm,
   parseEnableGradingFlag,
 } from "@/lib/upload/validate-upload"
 
-/** Allow long Gemini + rasterization work on supported hosts. */
+/** Allow long OpenAI + rasterization work on supported hosts. */
 export const maxDuration = 300
 export const runtime = "nodejs"
 
@@ -39,12 +39,12 @@ export async function POST(request: Request) {
   }
 
   // Fail fast when the API key is missing (before creating a job).
-  if (!process.env.GEMINI_API_KEY?.trim()) {
+  if (!process.env.OPENAI_API_KEY?.trim()) {
     return NextResponse.json(
       {
         error: {
           field: "form",
-          message: new GeminiConfigError().message,
+          message: new AiConfigError().message,
         },
       },
       { status: 500 }
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
   after(async () => {
     try {
-      await runGeminiAssessmentPipeline(job.id, {
+      await runOpenAiAssessmentPipeline(job.id, {
         questionPaper,
         answerSheet,
         enableGrading,

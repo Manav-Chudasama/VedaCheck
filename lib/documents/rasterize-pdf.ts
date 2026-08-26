@@ -1,6 +1,3 @@
-import path from "node:path"
-import { fileURLToPath, pathToFileURL } from "node:url"
-
 import {
   DEFAULT_MAX_LONG_EDGE,
   DEFAULT_MAX_PAGES,
@@ -13,22 +10,11 @@ import {
 import { encodePageRaster } from "@/lib/documents/encode-page"
 import { NodeCanvasFactory } from "@/lib/documents/node-canvas-factory"
 
-let workerConfigured = false
-
 async function loadPdfjs() {
   // Legacy build avoids DOMMatrix / browser-only APIs in Node.
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs")
-
-  if (!workerConfigured) {
-    const packageJsonUrl = import.meta.resolve("pdfjs-dist/package.json")
-    const pdfjsRoot = path.dirname(fileURLToPath(packageJsonUrl))
-    pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(
-      path.join(pdfjsRoot, "legacy/build/pdf.worker.mjs")
-    ).href
-    workerConfigured = true
-  }
-
-  return pdfjs
+  // Do not use import.meta.resolve here — Turbopack/Next replace it with a
+  // stub that is not a function. Workers are disabled in getDocument below.
+  return import("pdfjs-dist/legacy/build/pdf.mjs")
 }
 
 /**

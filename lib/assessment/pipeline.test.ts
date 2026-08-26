@@ -12,7 +12,7 @@ import {
   fixtureExtractQuestions,
   fixtureGrades,
   fixtureMapAnswersLlm,
-} from "@/lib/assessment/fixtures/gemini-responses"
+} from "@/lib/assessment/fixtures/ai-responses"
 
 async function tinyPng(): Promise<Buffer> {
   return sharp({
@@ -36,7 +36,7 @@ function mockAiDeps(): PipelineAiDeps {
   }
 }
 
-describe("runAssessmentPipeline (mocked Gemini)", () => {
+describe("runAssessmentPipeline (mocked OpenAI)", () => {
   test("reaches ready with answered / unanswered / unmatched items", async () => {
     const png = await tinyPng()
     const job = createAssessmentJob()
@@ -94,16 +94,16 @@ describe("runAssessmentPipeline (mocked Gemini)", () => {
         },
         ai: {
           extractQuestions: async () => {
-            throw new Error("mock Gemini rate limit")
+            throw new Error("mock OpenAI rate limit")
           },
           extractAnswers: async () => fixtureExtractAnswers,
         },
         enableGrading: false,
       })
-    ).rejects.toThrow("mock Gemini rate limit")
+    ).rejects.toThrow("mock OpenAI rate limit")
 
     const failed = getAssessmentJob(job.id)
     expect(failed?.stage).toBe("failed")
-    expect(failed?.error).toContain("mock Gemini rate limit")
+    expect(failed?.error).toContain("mock OpenAI rate limit")
   })
 })

@@ -55,7 +55,7 @@ export type RunAssessmentPipelineOptions = {
 
 /**
  * Run the full assessment pipeline, updating job stage/progress as it goes.
- * AI extractors are injected so Phase 4 can plug Gemini without changing this flow.
+ * AI extractors are injected so providers can be swapped without changing this flow.
  */
 export async function runAssessmentPipeline(
   jobId: string,

@@ -41,7 +41,7 @@ Cursor cannot open this link on its own. Export the key frames (upload screen, p
 
 **Constraints from the brief:**
 - Any tech stack is allowed; **this project has chosen Next.js** — a decision, not a requirement, see §8
-- Any AI model/API with a free tier is allowed; **this project has chosen Gemini** — also a decision, not a requirement, see §3.1
+- Any AI model/API with a free tier is allowed; **this project has chosen OpenAI (gpt-4o)** — a decision, not a requirement, see §3.1
 - No authentication, no database — in-memory storage only
 - Must ship to a live, deployed URL (see §10.7)
 
@@ -147,11 +147,11 @@ For multi-step tasks, state a brief plan before starting:
 
 The application uses the following AI/document-processing stack unless explicitly changed by the user:
 
-- **Google Gemini API** as the primary AI/vision model — a project choice made because it has a free tier and native document understanding, not something the assignment mandates. If this project ever switches models, update this section rather than leaving it stale.
-- Use the official **`@google/genai`** SDK for Gemini API integration.
-- Keep `GEMINI_API_KEY` strictly server-side. Never expose it to client-side code, browser bundles, logs, URLs, or public responses.
+- **OpenAI API (`gpt-4o`)** as the primary AI/vision model — a project choice for strong multimodal handwriting/document understanding. If this project ever switches models, update this section rather than leaving it stale.
+- Use the official **`openai`** SDK for API integration (structured outputs via Zod helpers).
+- Keep `OPENAI_API_KEY` strictly server-side. Never expose it to client-side code, browser bundles, logs, URLs, or public responses.
 
-Use Gemini for:
+Use OpenAI for:
 - Question-paper understanding and extraction.
 - Printed question extraction.
 - Handwritten answer recognition/transcription.
@@ -162,20 +162,20 @@ Use Gemini for:
 - Optional grading and AI-generated feedback.
 - Answer-region/bounding-box extraction where supported.
 
-> **Note — Gemini and PDFs:** Gemini's document-understanding models accept PDFs directly (each page is treated internally as an image) and can extract structured information, understand diagrams/tables, and transcribe layout — you may not need a separate OCR step for *extraction*. That said, you will still need to rasterize each page to an image on your own server (see §3.2) so the **UI** can display it and overlay a highlight box at known pixel coordinates — Gemini gives you the content, not a renderable image back. Google has also introduced a newer "Interactions API" alongside the classic `generateContent` method; confirm via §10.2 which surface the current `@google/genai` SDK version exposes before committing to one, since this is exactly the kind of detail that drifts after any training cutoff.
+> **Note — OpenAI and PDFs:** Send **rasterized page images** (not raw PDFs) to the vision model. You still need to rasterize each page on your own server (see §3.2) so the **UI** can display it and overlay a highlight box at known pixel coordinates — the model gives you content + coordinates, not a renderable image back. Confirm the current `openai` SDK structured-output helpers (`zodResponseFormat` / `chat.completions.parse`) against the installed version before changing the client wrapper.
 
-Treat Gemini output as untrusted external data. Never assume the model returned valid JSON or valid coordinates.
+Treat model output as untrusted external data. Never assume the model returned valid JSON or valid coordinates.
 
-- Validate all Gemini responses using **Zod** before using them anywhere in the application.
-- Prefer structured JSON responses from Gemini rather than parsing free-form natural-language responses.
+- Validate all AI responses using **Zod** before using them anywhere in the application.
+- Prefer structured JSON responses rather than parsing free-form natural-language responses.
 - Design AI processing as deterministic pipeline stages where practical (see the diagram in §0).
 
 Do not introduce another OCR/vision model such as TrOCR, PaddleOCR, Tesseract, or another VLM unless:
-- Gemini accuracy is demonstrably insufficient,
+- OpenAI accuracy is demonstrably insufficient,
 - the additional model provides a measurable benefit,
 - the change is discussed before implementation.
 
-If an additional OCR model is introduced, isolate it behind a dedicated abstraction so the primary Gemini integration does not become tightly coupled to the fallback implementation.
+If an additional OCR model is introduced, isolate it behind a dedicated abstraction so the primary OpenAI integration does not become tightly coupled to the fallback implementation.
 
 ### 3.2 PDF & Image Processing
 
@@ -221,7 +221,7 @@ type AnswerRegion = {
 
 ### 4.1 AI Error Handling
 
-Gemini and external AI services can fail or return unexpected results. Always handle:
+OpenAI and external AI services can fail or return unexpected results. Always handle:
 
 - Invalid API responses.
 - API rate limits.
@@ -400,9 +400,9 @@ Adapt the exact schema when requirements demand it, but preserve the same concep
 
 AI-dependent functionality must be tested at the deterministic boundaries around the model. Tests should cover:
 
-- Valid Gemini response.
-- Invalid Gemini response.
-- Missing Gemini fields.
+- Valid OpenAI / structured response.
+- Invalid OpenAI / structured response.
+- Missing AI response fields.
 - Invalid bounding boxes.
 - Unanswered questions.
 - Out-of-order answers.
@@ -416,7 +416,7 @@ AI-dependent functionality must be tested at the deterministic boundaries around
 - Failed AI requests.
 - Rate-limit/API failures.
 
-Where practical, mock Gemini responses instead of calling the real API during unit tests. Do not make tests dependent on live Gemini API availability.
+Where practical, mock AI responses instead of calling the real API during unit tests. Do not make tests dependent on live OpenAI API availability.
 
 ### 7.2 Test Fixtures
 
@@ -454,7 +454,7 @@ Prefer the following stack unless there is a documented reason to change it:
 
 **UI:** Tailwind CSS, Shadcn UI, Radix UI, lucide-react
 
-**AI:** `@google/genai`
+**AI:** `openai`
 
 **Validation:** zod
 
@@ -473,10 +473,10 @@ Do not install large or overlapping libraries without first checking whether the
 Maintain `.env.example` with required environment variables, for example:
 
 ```text
-GEMINI_API_KEY=
+OPENAI_API_KEY=
 ```
 
-Never expose `GEMINI_API_KEY` through:
+Never expose `OPENAI_API_KEY` through:
 - `NEXT_PUBLIC_*`
 - client components
 - browser bundles
@@ -505,8 +505,8 @@ When researching implementation details, prefer official documentation for the r
 
 - Next.js official documentation.
 - React official documentation.
-- Google Gemini API official documentation.
-- Google GenAI SDK documentation.
+- OpenAI API official documentation.
+- OpenAI Node.js SDK documentation.
 - Tailwind CSS documentation.
 - Shadcn UI documentation.
 - Radix UI documentation.
@@ -521,33 +521,33 @@ Do not rely on outdated tutorials when official documentation is available.
 
 ### 10.2 Research Before AI Integration Changes
 
-Before making changes to the Gemini integration:
+Before making changes to the OpenAI integration:
 
-- Check the current Gemini API documentation.
-- Verify the currently supported model.
-- Verify the current `@google/genai` SDK API — note that Google has been evolving the request surface (a newer "Interactions API" alongside the classic `generateContent` method), so confirm which one the installed SDK version actually targets.
-- Verify supported input types, including current PDF page-count and file-size limits.
-- Verify structured output capabilities.
+- Check the current OpenAI API documentation.
+- Verify the currently supported vision model (default: `gpt-4o`).
+- Verify the current `openai` SDK API (chat completions parse / structured outputs / Responses API).
+- Verify supported input types, including image limits and file-size guidance.
+- Verify structured output capabilities and JSON Schema restrictions.
 - Verify token/input limitations.
-- Verify image/PDF handling capabilities.
+- Verify image handling capabilities.
 - Verify rate limits and billing implications where relevant.
 
 Do not assume model names, SDK methods, or API behavior from training data.
 
 ### 10.3 AI Model Abstraction
 
-Keep Gemini-specific implementation isolated. Prefer a structure such as:
+Keep OpenAI-specific implementation isolated. Prefer a structure such as:
 
 ```text
 lib/
 └── ai/
-    ├── gemini.ts
+    ├── openai.ts
     ├── prompts.ts
     ├── schemas.ts
     └── types.ts
 ```
 
-The rest of the application should consume normalized application-level types rather than directly depending on Gemini response formats. This allows another AI/OCR provider to be introduced later without rewriting the assessment UI and domain logic.
+The rest of the application should consume normalized application-level types rather than directly depending on OpenAI response formats. This allows another AI/OCR provider to be introduced later without rewriting the assessment UI and domain logic.
 
 ### 10.4 Prompt Management
 
@@ -574,7 +574,7 @@ Prompts should:
 
 ### 10.5 Deterministic Logic Over LLM Logic
 
-Do not use Gemini for tasks that can be solved reliably through deterministic code. Prefer application code for:
+Do not use the LLM for tasks that can be solved reliably through deterministic code. Prefer application code for:
 
 - Sorting questions.
 - Preserving question order.
@@ -587,7 +587,7 @@ Do not use Gemini for tasks that can be solved reliably through deterministic co
 - Maintaining UI state.
 - Determining whether an answer is technically present.
 
-Use Gemini for semantic tasks such as:
+Use the LLM for semantic tasks such as:
 
 - Understanding question text.
 - Reading handwriting.
@@ -609,7 +609,7 @@ Treat all uploaded documents as untrusted input.
 - Do not log document contents.
 - Do not log handwritten answers unnecessarily.
 - Do not log API keys or authorization headers.
-- Keep Gemini credentials server-side.
+- Keep OpenAI credentials server-side.
 - Sanitize any AI-generated text before rendering as HTML.
 - Prefer rendering AI output as plain text/React content rather than injecting arbitrary HTML.
 
@@ -619,7 +619,7 @@ The application must be deployable as a production Next.js application. Before r
 
 - Verify the target platform's current Next.js compatibility.
 - Verify environment-variable configuration.
-- Verify server-side Gemini API access.
+- Verify server-side OpenAI API access.
 - Verify file-size/request limitations.
 - Verify serverless execution time limitations.
 - Verify temporary file handling.
@@ -627,7 +627,7 @@ The application must be deployable as a production Next.js application. Before r
 
 Do not assume local filesystem persistence is available in production. Because the assignment explicitly allows in-memory storage and does not require a database, avoid introducing a database unless requirements change.
 
-> **If deploying to Vercel** (a natural fit for Next.js): `sharp` needs Node.js's native `require`, not the Server Components bundler — if you hit a bundling error, add it to `serverExternalPackages` in `next.config.js` (this is the current top-level option; older guides call it `experimental.serverComponentsExternalPackages`, which has been superseded). Confirm the serverless function's memory and time limits are enough for a PDF rasterization + Gemini round trip. Set `GEMINI_API_KEY` as an encrypted environment variable in the hosting dashboard — never commit it to the repo.
+> **If deploying to Vercel** (a natural fit for Next.js): `sharp` needs Node.js's native `require`, not the Server Components bundler — if you hit a bundling error, add it to `serverExternalPackages` in `next.config.js` (this is the current top-level option; older guides call it `experimental.serverComponentsExternalPackages`, which has been superseded). Confirm the serverless function's memory and time limits are enough for a PDF rasterization + OpenAI round trip. Set `OPENAI_API_KEY` as an encrypted environment variable in the hosting dashboard — never commit it to the repo.
 
 ---
 
@@ -656,7 +656,7 @@ When the app is functionally complete, prepare the submission package (submitted
 - Live deployed URL — re-check §10.7 before shipping, since deployment-runtime issues (Node vs Bun, sharp bundling) are easy to miss until the very last step.
 - GitHub repository link.
 - A brief written explanation of your approach — the pipeline in §0 is a good starting point to condense, not paste verbatim.
-- Which AI model/API was used, including version (e.g. Gemini 2.x / 3.x), and why.
+- Which AI model/API was used, including version (e.g. OpenAI gpt-4o), and why.
 - Assumptions and limitations, stated explicitly rather than left implicit — e.g. expected image/scan quality, max file size, languages supported, handwriting legibility assumptions, page-count limits.
 
 Consider maintaining a `SUBMISSION.md` alongside `IMPLEMENTATION.md` and `DESIGN.md` (§8, §5) so this content is drafted incrementally while you build, rather than written from scratch at the end.

@@ -1,11 +1,11 @@
 import { extractAnswersFromPages } from "@/lib/ai/extract-answers"
 import { extractQuestionsFromPages } from "@/lib/ai/extract-questions"
-import { gradeAnswersWithGemini } from "@/lib/ai/grade-answers"
-import { mapAnswersWithGemini } from "@/lib/ai/map-answers"
+import { gradeAnswersWithOpenAi } from "@/lib/ai/grade-answers"
+import { mapAnswersWithOpenAi } from "@/lib/ai/map-answers"
 import type { PipelineAiDeps } from "@/lib/assessment/pipeline"
 import { mapAnswersDeterministic } from "@/lib/assessment/map-answers"
 
-export type CreateGeminiPipelineAiDepsOptions = {
+export type CreateOpenAiPipelineAiDepsOptions = {
   /**
    * When true (default), run an LLM mapping pass.
    * If `onlyWhenAmbiguous` is also true, LLM runs only when deterministic
@@ -19,11 +19,11 @@ export type CreateGeminiPipelineAiDepsOptions = {
 }
 
 /**
- * Build PipelineAiDeps backed by Gemini structured-output calls.
- * Server-only — requires GEMINI_API_KEY.
+ * Build PipelineAiDeps backed by OpenAI structured-output calls.
+ * Server-only — requires OPENAI_API_KEY.
  */
-export function createGeminiPipelineAiDeps(
-  options: CreateGeminiPipelineAiDepsOptions = {}
+export function createOpenAiPipelineAiDeps(
+  options: CreateOpenAiPipelineAiDepsOptions = {}
 ): PipelineAiDeps {
   const enableLlmMapping = options.enableLlmMapping !== false
   const onlyWhenAmbiguous = options.onlyWhenAmbiguous !== false
@@ -43,9 +43,9 @@ export function createGeminiPipelineAiDeps(
               return deterministic
             }
           }
-          return mapAnswersWithGemini(questions, answers)
+          return mapAnswersWithOpenAi(questions, answers)
         }
       : undefined,
-    gradeAnswers: enableGrading ? gradeAnswersWithGemini : undefined,
+    gradeAnswers: enableGrading ? gradeAnswersWithOpenAi : undefined,
   }
 }

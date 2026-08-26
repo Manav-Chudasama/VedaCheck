@@ -7,9 +7,14 @@ import type {
   MapAnswersResultDto,
 } from "@/lib/ai/types"
 
-/** Normalized bbox [x1, y1, x2, y2] in 0–1. Raw shape only — geometry validated later. */
+/**
+ * Bounding box as a 4-number array [x1, y1, x2, y2].
+ * Array form (not tuple) plays nicer with OpenAI structured-output JSON Schema.
+ */
 export const bboxSchema = z
-  .tuple([z.number(), z.number(), z.number(), z.number()])
+  .array(z.number())
+  .min(4)
+  .max(4)
   .describe("Normalized bounding box [x1, y1, x2, y2] in 0–1 page coordinates")
 
 export const answerRegionSchema = z.object({
@@ -36,7 +41,6 @@ export const extractedQuestionSchema = z.object({
     .number()
     .nonnegative()
     .nullable()
-    .optional()
     .describe("Marks for this question if printed; otherwise null"),
 })
 
@@ -63,7 +67,6 @@ export const extractedAnswerSchema = z.object({
     .min(0)
     .max(1)
     .nullable()
-    .optional()
     .describe("Model confidence 0–1 for this answer block"),
 })
 
@@ -81,7 +84,7 @@ export const mappedAnswerSchema = z.object({
     .string()
     .nullable()
     .describe("Matching question number string, or null if unmatched"),
-  confidence: z.number().min(0).max(1).nullable().optional(),
+  confidence: z.number().min(0).max(1).nullable(),
 })
 
 export const mapAnswersResultSchema = z.object({
@@ -103,7 +106,7 @@ export const gradedAnswerSchema = z.object({
 
 export const gradeAnswersResultSchema = z.object({
   grades: z.array(gradedAnswerSchema),
-  overallFeedback: z.string().nullable().optional(),
+  overallFeedback: z.string().nullable(),
 })
 
 export type ExtractQuestionsResult = z.infer<
@@ -121,10 +124,9 @@ export type GradeAnswersResult = z.infer<typeof gradeAnswersResultSchema> &
   GradeAnswersResultDto
 
 /**
- * Convert a Zod schema to a JSON Schema object suitable for Gemini
- * `responseJsonSchema` (strips draft `$schema` meta).
+ * Convert a Zod schema to a plain JSON Schema object (strips draft `$schema`).
  */
-export function zodToGeminiJsonSchema(schema: z.ZodType): Record<string, unknown> {
+export function zodToJsonSchema(schema: z.ZodType): Record<string, unknown> {
   const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>
   const { $schema: _schema, ...rest } = jsonSchema
   return rest

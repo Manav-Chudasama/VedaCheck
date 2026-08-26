@@ -1,5 +1,5 @@
-import { generateStructuredJsonFromImages } from "@/lib/ai/gemini"
-import { pageRastersToGeminiImages } from "@/lib/ai/page-images"
+import { generateStructuredJsonFromImages } from "@/lib/ai/openai"
+import { pageRastersToAiImages } from "@/lib/ai/page-images"
 import {
   EXTRACT_ANSWERS_SYSTEM,
   buildExtractAnswersPrompt,
@@ -21,12 +21,13 @@ export async function extractAnswersFromPages(
 
   return generateStructuredJsonFromImages({
     schema: extractAnswersResultSchema,
+    schemaName: "extract_answers",
     systemInstruction: EXTRACT_ANSWERS_SYSTEM,
     prompt: buildExtractAnswersPrompt({
       pageCount: pages.length,
       questionNumbers,
     }),
-    images: pageRastersToGeminiImages(pages),
+    images: pageRastersToAiImages(pages),
     temperature: 0.2,
   })
 }

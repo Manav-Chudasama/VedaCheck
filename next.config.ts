@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     "sharp",
     "pdfjs-dist",
-    "@google/genai",
+    "openai",
     "@napi-rs/canvas",
   ],
   // Allow ~10MB uploads (+ multipart overhead) for assessment files.

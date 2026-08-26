@@ -1,4 +1,4 @@
-import { generateStructuredJson } from "@/lib/ai/gemini"
+import { generateStructuredJson } from "@/lib/ai/openai"
 import {
   GRADE_ANSWERS_SYSTEM,
   buildGradeAnswersPrompt,
@@ -18,7 +18,7 @@ export type GradeAnswersInput = {
 /**
  * Optional per-question scoring + teacher-facing feedback.
  */
-export async function gradeAnswersWithGemini(
+export async function gradeAnswersWithOpenAi(
   input: GradeAnswersInput
 ): Promise<GradeAnswersResultDto> {
   if (input.pairs.length === 0) {
@@ -33,8 +33,9 @@ export async function gradeAnswersWithGemini(
 
   const result = await generateStructuredJson({
     schema: gradeAnswersResultSchema,
+    schemaName: "grade_answers",
     systemInstruction: GRADE_ANSWERS_SYSTEM,
-    contents: buildGradeAnswersPrompt({ pairs }),
+    userText: buildGradeAnswersPrompt({ pairs }),
     temperature: 0.2,
   })
 
