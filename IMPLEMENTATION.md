@@ -45,3 +45,18 @@
 - `public/images/extracting-state.svg` sparkle graphic
 - `components/processing/extracting-screen.tsx` — centered Extracting… state in white panel
 - `components/assessment/assessment-flow.tsx` — upload → extracting; collapses sidebar on Start Mapping
+
+## Phase 2.2 — Mapping viewer UI (current)
+
+**Done:**
+
+- Types + mock fixture: `lib/assessment/types.ts`, `mock-assessment.ts`
+- `components/viewer/mapping-screen.tsx` — desktop split + mobile tabs
+- Question list / cards / score badges / answer sheet panel with bbox overlays
+- Flow: upload → extracting (~2.8s) → mapping (mock data)
+
+**Next:**
+
+- Replace mock with Gemini extract/map pipeline
+- Real answer-sheet page rasters + validated bboxes
+- Deploy

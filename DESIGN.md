@@ -29,6 +29,17 @@ Measured from SVG artboard `1440×787`:
 - Viewport locked (`h-svh`, `overflow-hidden`) — no page scroll
 - **Extracting / loading:** sidebar collapses to icon rail; main area shows a white rounded panel with sparkle SVG + “Extracting…” (from `Loading state.png` / `extracting-state.svg`)
 
+## Mapping viewer
+
+From `Question - Answer mapping screen.svg` / `.png` (+ phone toggles):
+
+- Desktop: two columns — question list | answer sheet
+- Mobile: `Questions` / `Answer Sheet` segmented tabs
+- Question cards: index circle, text, score pill (full / partial / zero), expand for AI feedback; selected = `question-active` border
+- Answer sheet: zoom + pagination toolbar, stacked pages, green `bbox` highlight + `Q#` tag
+- Tokens: `--score-full*`, `--score-partial*`, `--score-zero*`, `--bbox`, `--bbox-fill`, `--question-active`, `--answer-paper`
+- UI currently driven by `lib/assessment/mock-assessment.ts` until the Gemini pipeline lands
+
 ## Upload screen
 
 - Title: dark “Upload” + brand-colored phrase on `bg-highlight/15` (not solid white-on-orange)
