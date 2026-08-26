@@ -157,7 +157,21 @@
 - `GET /api/assessments/[id]/pages/[page]` — WebP raster (nodejs runtime)
 - `maxDuration = 300` on POST; fail-fast if `GEMINI_API_KEY` missing
 
+## Phase 8 — Wire UI to real pipeline
+
+**Goal:** React Query polling, live AssessmentFlow, staged extracting UI, unmatched answers panel.
+
+**Done:**
+
+- `QueryProvider` in `app/layout.tsx`
+- `lib/assessment/api-client.ts` — create / status / result client helpers
+- `hooks/use-assessment-processing.ts` — status poll every 1.5s until ready/failed
+- `AssessmentFlow` — upload files → POST → poll → mapping with real result
+- `ExtractingScreen` — stage list + progress bar + error/retry
+- `UnmatchedAnswersPanel` — select unmatched blocks to highlight regions
+- Upload CTA shows submitting state
+
 **Next:**
 
-- Wire `AssessmentFlow` to these APIs
-- Staged extracting UI + unmatched answers panel
+- Unit tests (bbox, normalize, schemas, mocked Gemini)
+- Deploy + `GEMINI_API_KEY` in hosting

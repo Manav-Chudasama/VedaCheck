@@ -13,6 +13,7 @@ type UploadScreenProps = {
     questionPaper: File
     answerSheet: File
   }) => void
+  isSubmitting?: boolean
 }
 
 /**
@@ -20,12 +21,16 @@ type UploadScreenProps = {
  * (1440×787 artboard): soft title highlight, avatar, frosted dropzone tray,
  * dashed cards, pill CTA — all centered on the canvas (no large content card).
  */
-export function UploadScreen({ onStartMapping }: UploadScreenProps) {
+export function UploadScreen({
+  onStartMapping,
+  isSubmitting = false,
+}: UploadScreenProps) {
   const [questionPaper, setQuestionPaper] = useState<File | null>(null)
   const [answerSheet, setAnswerSheet] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const canStartMapping = Boolean(questionPaper && answerSheet)
+  const canStartMapping =
+    Boolean(questionPaper && answerSheet) && !isSubmitting
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -83,12 +88,14 @@ export function UploadScreen({ onStartMapping }: UploadScreenProps) {
                 !canStartMapping && "opacity-45 hover:bg-cta"
               )}
               onClick={() => {
-                if (!questionPaper || !answerSheet) return
+                if (!questionPaper || !answerSheet || isSubmitting) return
                 onStartMapping?.({ questionPaper, answerSheet })
               }}
             >
-              Start Mapping
-              <ArrowRight className="size-4" data-icon="inline-end" />
+              {isSubmitting ? "Starting…" : "Start Mapping"}
+              {!isSubmitting ? (
+                <ArrowRight className="size-4" data-icon="inline-end" />
+              ) : null}
             </Button>
             <p className="max-w-sm text-center text-xs text-muted-foreground">
               Once both files are uploaded, you&apos;ll be able to map answers

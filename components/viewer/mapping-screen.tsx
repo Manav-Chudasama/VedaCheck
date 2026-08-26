@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 
 import { AnswerSheetPanel } from "@/components/viewer/answer-sheet-panel"
 import { QuestionPanel } from "@/components/viewer/question-panel"
+import { UnmatchedAnswersPanel } from "@/components/viewer/unmatched-answers-panel"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { AssessmentViewModel } from "@/lib/assessment/types"
 
@@ -11,35 +12,62 @@ type MappingScreenProps = {
   assessment: AssessmentViewModel
 }
 
+type Selection =
+  | { type: "question"; id: string }
+  | { type: "unmatched"; index: number }
+
 /**
- * Question ↔ answer mapping viewer (UI shell).
+ * Question ↔ answer mapping viewer.
  * Desktop: side-by-side. Mobile: Questions / Answer Sheet tabs.
  */
 export function MappingScreen({ assessment }: MappingScreenProps) {
-  const defaultSelected =
-    assessment.items.find((i) => i.question.number === "2")?.question.id ??
+  const defaultQuestionId =
+    assessment.items.find((i) => i.status === "answered")?.question.id ??
     assessment.items[0]?.question.id ??
     null
 
-  const [selectedId, setSelectedId] = useState<string | null>(defaultSelected)
+  const [selection, setSelection] = useState<Selection | null>(
+    defaultQuestionId
+      ? { type: "question", id: defaultQuestionId }
+      : assessment.unmatchedAnswers.length > 0
+        ? { type: "unmatched", index: 0 }
+        : null
+  )
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(defaultSelected ? [defaultSelected] : [])
+    () => new Set(defaultQuestionId ? [defaultQuestionId] : [])
   )
   const [zoom, setZoom] = useState(1)
   const [mobileTab, setMobileTab] = useState("questions")
 
+  const selectedQuestionId =
+    selection?.type === "question" ? selection.id : null
+  const selectedUnmatchedIndex =
+    selection?.type === "unmatched" ? selection.index : null
+
   const selectedItem = useMemo(
-    () => assessment.items.find((i) => i.question.id === selectedId) ?? null,
-    [assessment.items, selectedId]
+    () =>
+      selectedQuestionId
+        ? (assessment.items.find((i) => i.question.id === selectedQuestionId) ??
+          null)
+        : null,
+    [assessment.items, selectedQuestionId]
   )
 
-  const regions = selectedItem?.answer?.regions ?? []
+  const selectedUnmatched =
+    selectedUnmatchedIndex !== null
+      ? (assessment.unmatchedAnswers[selectedUnmatchedIndex] ?? null)
+      : null
+
+  const regions =
+    selectedItem?.answer?.regions ?? selectedUnmatched?.regions ?? []
+
   const highlightLabel = selectedItem
     ? `Q${selectedItem.question.number.replace(/[()]/g, "")}`
-    : ""
+    : selectedUnmatched
+      ? `U${(selectedUnmatchedIndex ?? 0) + 1}`
+      : "Q"
 
   const currentPage = regions[0]?.page ?? 1
-
   const [page, setPage] = useState(currentPage)
 
   const allExpanded =
@@ -47,10 +75,17 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
     assessment.items.every((i) => expandedIds.has(i.question.id))
 
   const selectQuestion = (id: string) => {
-    setSelectedId(id)
+    setSelection({ type: "question", id })
     setExpandedIds((prev) => new Set(prev).add(id))
     const item = assessment.items.find((i) => i.question.id === id)
     const firstPage = item?.answer?.regions[0]?.page
+    if (firstPage) setPage(firstPage)
+  }
+
+  const selectUnmatched = (index: number) => {
+    setSelection({ type: "unmatched", index })
+    const answer = assessment.unmatchedAnswers[index]
+    const firstPage = answer?.regions[0]?.page
     if (firstPage) setPage(firstPage)
   }
 
@@ -71,48 +106,54 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
     setExpandedIds(new Set(assessment.items.map((i) => i.question.id)))
   }
 
-  const questionPanel = (
-    <QuestionPanel
-      items={assessment.items}
-      selectedId={selectedId}
-      expandedIds={expandedIds}
-      onSelect={selectQuestion}
-      onToggleExpand={toggleExpand}
-      onExpandAll={expandAll}
-      allExpanded={allExpanded}
-    />
+  const questionsColumn = (
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="min-h-0 flex-1">
+        <QuestionPanel
+          items={assessment.items}
+          selectedId={selectedQuestionId}
+          expandedIds={expandedIds}
+          onSelect={selectQuestion}
+          onToggleExpand={toggleExpand}
+          onExpandAll={expandAll}
+          allExpanded={allExpanded}
+        />
+      </div>
+      <UnmatchedAnswersPanel
+        answers={assessment.unmatchedAnswers}
+        selectedIndex={selectedUnmatchedIndex}
+        onSelect={selectUnmatched}
+      />
+    </div>
   )
 
   const answerPanel = (
     <AnswerSheetPanel
       pages={assessment.pages}
       regions={regions}
-      label={highlightLabel || "Q"}
+      label={highlightLabel}
       currentPage={page}
       zoom={zoom}
       onPageChange={setPage}
       onZoomChange={setZoom}
-      /** Re-scroll when opening the Answer Sheet tab with the last selection. */
-      focusToken={`${mobileTab}:${selectedId}:${page}`}
+      focusToken={`${mobileTab}:${selection?.type ?? "none"}:${selectedQuestionId}:${selectedUnmatchedIndex}:${page}`}
     />
   )
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      {/* Desktop split */}
       <div className="hidden h-full min-h-0 gap-3 lg:grid lg:grid-cols-2">
-        {questionPanel}
+        {questionsColumn}
         {answerPanel}
       </div>
 
-      {/* Mobile tabs — sized from Question toggle (phone).svg: 369×54, rx=27, 4px inset */}
       <div className="flex h-full min-h-0 flex-col lg:hidden">
         <Tabs
           value={mobileTab}
           onValueChange={setMobileTab}
           className="flex h-full min-h-0 flex-col gap-3"
         >
-          <TabsList className="mx-0 h-14! w-full grid grid-cols-2 rounded-full bg-file-chip p-1.5 text-foreground shadow-none">
+          <TabsList className="mx-0 grid h-14! w-full grid-cols-2 rounded-full bg-file-chip p-1.5 text-foreground shadow-none">
             <TabsTrigger
               value="questions"
               className="h-full! w-full min-w-0 flex-none rounded-full px-3 py-0 text-[15px] leading-none font-medium text-muted-foreground shadow-none data-active:bg-cta data-active:text-white data-active:shadow-[0_8px_20px_rgba(0,0,0,0.18)]"
@@ -130,7 +171,7 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
             value="questions"
             className="mt-0 min-h-0 flex-1 overflow-hidden"
           >
-            {questionPanel}
+            {questionsColumn}
           </TabsContent>
           <TabsContent
             value="answers"

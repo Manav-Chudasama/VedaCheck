@@ -1,26 +1,149 @@
 "use client"
 
+import { AlertCircle } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import {
+  STAGE_LABELS,
+  type ProcessingStage,
+} from "@/lib/assessment/stages"
 import { cn } from "@/lib/utils"
 
+const VISIBLE_STAGES: ProcessingStage[] = [
+  "reading",
+  "extracting_questions",
+  "reading_answers",
+  "mapping",
+  "grading",
+]
+
+type ExtractingScreenProps = {
+  stage?: ProcessingStage
+  progress?: number
+  label?: string
+  error?: string | null
+  onRetry?: () => void
+}
+
 /**
- * Loading / extracting view from `Loading state.png` + extracting sparkles.
- * Stars blink on staggered cycles; "Extracting" ellipsis animates.
+ * Loading / extracting view with staged pipeline progress.
+ * Stars blink; stage list + progress update from status polling.
  */
-export function ExtractingScreen() {
+export function ExtractingScreen({
+  stage = "reading",
+  progress = 0,
+  label,
+  error,
+  onRetry,
+}: ExtractingScreenProps) {
+  const displayLabel = label ?? STAGE_LABELS[stage] ?? "Extracting"
+  const clampedProgress = Math.min(100, Math.max(0, progress))
+  const activeIndex = VISIBLE_STAGES.indexOf(
+    stage === "uploading"
+      ? "reading"
+      : stage === "ready"
+        ? "grading"
+        : stage === "failed"
+          ? VISIBLE_STAGES[VISIBLE_STAGES.length - 1]
+          : stage
+  )
+
+  if (error) {
+    return (
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background shadow-[0_16px_48px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <AlertCircle className="size-6" aria-hidden />
+          </div>
+          <div className="max-w-md space-y-1.5">
+            <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              Processing failed
+            </h2>
+            <p className="text-sm text-muted-foreground" role="alert">
+              {error}
+            </p>
+          </div>
+          {onRetry ? (
+            <Button
+              size="lg"
+              className="mt-2 h-11 min-w-[140px] rounded-full bg-cta px-6 text-sm font-semibold text-white hover:bg-cta/90"
+              onClick={onRetry}
+            >
+              Try again
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background shadow-[0_16px_48px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
-        <div className="flex flex-col items-center gap-4 text-center sm:gap-5">
+        <div className="flex w-full max-w-md flex-col items-center gap-6 text-center sm:gap-7">
           <ExtractingSparks className="h-[7.5rem] w-auto sm:h-[8.4rem]" />
+
           <div className="space-y-1.5">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-[28px] sm:leading-9">
-              Extracting
-              <AnimatedEllipsis />
+              {displayLabel}
+              {stage !== "ready" ? <AnimatedEllipsis /> : null}
             </h2>
             <p className="text-sm text-muted-foreground sm:text-base">
               This may take a while
             </p>
           </div>
+
+          <div className="w-full space-y-3">
+            <div
+              className="h-2 overflow-hidden rounded-full bg-muted"
+              role="progressbar"
+              aria-valuenow={clampedProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Processing progress"
+            >
+              <div
+                className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out"
+                style={{ width: `${clampedProgress}%` }}
+              />
+            </div>
+            <p className="text-xs font-medium tabular-nums text-muted-foreground">
+              {clampedProgress}%
+            </p>
+          </div>
+
+          <ol className="w-full space-y-2 text-left">
+            {VISIBLE_STAGES.map((step, index) => {
+              const isDone = activeIndex > index
+              const isCurrent = activeIndex === index
+              return (
+                <li
+                  key={step}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+                    isCurrent && "bg-highlight/10 text-foreground",
+                    isDone && "text-muted-foreground",
+                    !isDone && !isCurrent && "text-muted-foreground/70"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                      isCurrent && "bg-brand text-white",
+                      isDone && "bg-muted text-foreground",
+                      !isDone && !isCurrent && "bg-muted/80 text-muted-foreground"
+                    )}
+                    aria-hidden
+                  >
+                    {isDone ? "✓" : index + 1}
+                  </span>
+                  <span className={cn(isCurrent && "font-semibold")}>
+                    {STAGE_LABELS[step]}
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono, Inter } from "next/font/google"
 
+import { QueryProvider } from "@/components/providers/query-provider"
 import "./globals.css"
 import { cn } from "@/lib/utils"
 
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         inter.variable
       )}
     >
-      <body className="flex h-svh flex-col overflow-hidden">{children}</body>
+      <body className="flex h-svh flex-col overflow-hidden">
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   )
 }
