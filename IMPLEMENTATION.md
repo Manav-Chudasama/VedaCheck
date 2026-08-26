@@ -123,6 +123,24 @@
 
 **Next:**
 
-- Implement Gemini-backed `PipelineAiDeps`
-- `POST /api/assessments` + status/result routes
-- Wire `AssessmentFlow` to real jobs
+- Upload + status/result API routes
+- Wire UI to real processing
+
+## Phase 6 — Gemini extract / map / grade stages
+
+**Goal:** Concrete Gemini-backed `PipelineAiDeps` for question extraction, answer transcription + bboxes, mapping, and optional grading.
+
+**Done:**
+
+- `lib/ai/extract-questions.ts` — vision extract from QP pages
+- `lib/ai/extract-answers.ts` — handwriting + regions from answer pages
+- `lib/ai/map-answers.ts` — text-only LLM second-pass mapping
+- `lib/ai/grade-answers.ts` — scores + feedback (clamped to maxScore)
+- `lib/ai/page-images.ts` — `PageRaster` → Gemini image parts
+- `lib/ai/pipeline-deps.ts` — `createGeminiPipelineAiDeps()` (skips LLM map when labels fully match)
+- `lib/ai/run-pipeline.ts` — `runGeminiAssessmentPipeline(jobId, docs)`
+
+**Next:**
+
+- Upload + status/result API routes
+- Wire UI to real processing

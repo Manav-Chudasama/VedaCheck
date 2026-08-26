@@ -34,6 +34,20 @@ export {
   zodToGeminiJsonSchema,
 } from "@/lib/ai/schemas"
 
+export { pageRastersToGeminiImages } from "@/lib/ai/page-images"
+export { extractQuestionsFromPages } from "@/lib/ai/extract-questions"
+export { extractAnswersFromPages } from "@/lib/ai/extract-answers"
+export { mapAnswersWithGemini } from "@/lib/ai/map-answers"
+export { gradeAnswersWithGemini } from "@/lib/ai/grade-answers"
+export {
+  createGeminiPipelineAiDeps,
+  type CreateGeminiPipelineAiDepsOptions,
+} from "@/lib/ai/pipeline-deps"
+export {
+  runGeminiAssessmentPipeline,
+  type RunGeminiAssessmentOptions,
+} from "@/lib/ai/run-pipeline"
+
 export type {
   AnswerRegionDto,
   BBoxDto,
