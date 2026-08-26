@@ -27,7 +27,7 @@ export function VedaLogo({ className, showWordmark = true }: VedaLogoProps) {
       </div>
       {showWordmark ? (
         <span className="truncate text-base font-semibold tracking-tight text-foreground">
-          VedaAI
+          VedaCheck
         </span>
       ) : null}
     </div>
