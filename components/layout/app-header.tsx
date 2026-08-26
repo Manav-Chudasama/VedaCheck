@@ -31,7 +31,7 @@ export function AppHeader({ title = "Exams" }: AppHeaderProps) {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/60 px-3 md:h-16 md:px-5">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 rounded-2xl bg-background/75 px-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)] ring-1 ring-black/5 backdrop-blur-md md:px-5">
       {/* Left: back + section label (desktop) / brand (mobile) */}
       <div className="flex min-w-0 items-center gap-2">
         <Button

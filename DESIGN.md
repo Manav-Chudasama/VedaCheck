@@ -4,40 +4,44 @@ Consistency decisions for VedaAI / VedaCheck UI.
 
 ## Source of truth
 
-- **Layout / structure:** Figma frames exported to `public/screens/`
-- **Colors, fonts, radii:** `app/globals.css` only — do not invent ad-hoc palette colors in components
+- **Layout / structure:** Figma exports in `public/screens/` — prefer the SVG when available (e.g. `Upload Screen - Empty State.svg`) for exact spacing, radii, and colors
+- **Colors, fonts, radii:** `app/globals.css` only — map SVG hex values into CSS variables, then use Tailwind tokens
 
-## Brand tokens
+## Brand tokens (from empty-state SVG)
 
 | Token | Role |
 |---|---|
-| `--canvas` / `bg-canvas` | Soft gray page background behind floating panels |
-| `--brand` / `bg-brand` `text-brand` `ring-brand` | Orange accent (toolkit ring, notification dot, later upload highlights) |
-| `--background` | White panel surfaces (sidebar inner, main inset) |
-| `--foreground` | Primary text and dark CTAs |
-| `--muted` | Active nav pill, school card, subtle fills |
+| `--canvas` → `--canvas-end` | Page gradient `#F5F5F5` → `#E9E5E5` |
+| `--brand` | Accent orange (`#FF5623` family) — labels, rings, title phrase |
+| `--highlight` | Soft peach title wash (`#FF9350` @ ~15%) |
+| `--cta` / `--cta-disabled` | Pill button `#303030` / `#D9D9D9` |
+| `--dropzone-stroke` | Dashed card border `#CECECE` |
+| `--icon-well` | Upload icon tile `#F3F3F3` |
 
-Primary buttons stay dark (`bg-foreground` / `bg-primary`). Brand orange is for accents and rings, not the default solid button fill (matches Figma).
+## App shell (upload)
 
-## App shell
+Measured from SVG artboard `1440×787`:
 
-- Floating **inset** layout: rounded sidebar + rounded main panel on `bg-canvas`, with a gap between them.
-- Desktop expanded sidebar (upload screens): logo + wordmark, collapse control, toolkit CTA, labeled nav, settings, school card.
-- Desktop collapsed sidebar (processing / viewer): logo mark, toolkit icon with brand ring, icon nav, school crest, expand control.
-- Mobile: no persistent sidebar; header hamburger opens the shadcn sidebar sheet. Header shows back + **VedaAI** wordmark; right side is bell, avatar, menu.
+- Gradient **canvas** (no large white content panel)
+- **Sidebar** floating white card (~304px, `rx=16`, soft drop shadow)
+- **Header** separate floating card (`h≈56`, `rx=16`, white @ ~75% + blur) — sticky
+- Main content sits **on the canvas** under the header
+- Viewport locked (`h-svh`, `overflow-hidden`) — no page scroll
 
-## Header
+## Upload screen
 
-- Desktop left: back → separator → section icon + label (`Exams`).
-- Desktop right: help, notifications (brand dot), sparkles, user chip (avatar + name + chevron).
-- Chrome is static product UI for now (no real auth / school switching).
+- Title: dark “Upload” + brand-colored phrase on `bg-highlight/15` (not solid white-on-orange)
+- Hero: `/images/upload-screen-avatar.svg` (~138px)
+- Frosted tray (`bg-white/50`, `rx=24`) wrapping two dropzones
+- Each dropzone: white, dashed stroke, `rx≈19`, min-height ~179px, soft shadow; icon in `#F3F3F3` well
+- Accept PDF + images, max 10MB; drag-and-drop + click
+- **Start Mapping** pill (~161×44); enabled only when both files set
 
 ## Components
 
-Prefer shadcn (`Sidebar*`, `Button`, `Avatar`, `DropdownMenu`, `Separator`, `Tooltip`, `Sheet`) before custom primitives.
+Prefer shadcn before custom primitives. Upload dropzones are custom (native DnD + file input).
 
 ## References
 
-- Upload empty/filled (desktop + phone)
-- Loading (desktop + phone)
-- Question–answer mapping (desktop + phone toggles)
+- `Upload Screen - Empty State.svg` / `.png` (+ phone)
+- Loading, Question–Answer mapping frames

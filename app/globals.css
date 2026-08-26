@@ -42,6 +42,12 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-canvas: var(--canvas);
+  --color-canvas-end: var(--canvas-end);
+  --color-highlight: var(--highlight);
+  --color-cta: var(--cta);
+  --color-cta-disabled: var(--cta-disabled);
+  --color-dropzone-stroke: var(--dropzone-stroke);
+  --color-icon-well: var(--icon-well);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -70,11 +76,18 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  /* Brand orange from VedaAI Figma references */
-  --brand: oklch(0.7 0.19 45);
+  /* Brand orange from upload-screen SVG (#FF5623) */
+  --brand: oklch(0.68 0.2 40);
   --brand-foreground: oklch(1 0 0);
-  /* Soft gray page canvas behind floating panels */
-  --canvas: oklch(0.965 0 0);
+  /* Page canvas gradient stops from SVG (#F5F5F5 → #E9E5E5) */
+  --canvas: #f5f5f5;
+  --canvas-end: #e9e5e5;
+  --highlight: #ff9350;
+  /* Upload CTA / dropzone chrome from empty-state SVG */
+  --cta: #303030;
+  --cta-disabled: #d9d9d9;
+  --dropzone-stroke: #cecece;
+  --icon-well: #f3f3f3;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -110,9 +123,15 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --brand: oklch(0.75 0.18 45);
+  --brand: oklch(0.75 0.18 40);
   --brand-foreground: oklch(0.2 0 0);
-  --canvas: oklch(0.18 0 0);
+  --canvas: oklch(0.2 0 0);
+  --canvas-end: oklch(0.16 0 0);
+  --highlight: oklch(0.75 0.16 45);
+  --cta: oklch(0.92 0 0);
+  --cta-disabled: oklch(0.4 0 0);
+  --dropzone-stroke: oklch(0.45 0 0);
+  --icon-well: oklch(0.28 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

@@ -16,8 +16,9 @@ type AppShellProps = {
 }
 
 /**
- * Floating two-panel app chrome from the Figma screens:
- * soft canvas background, rounded sidebar + main panel with gap.
+ * Layout from `Upload Screen - Empty State.svg`:
+ * gradient canvas, floating sidebar card, floating header card,
+ * content sits on the canvas (not inside a large white panel).
  */
 export function AppShell({
   children,
@@ -28,18 +29,22 @@ export function AppShell({
     <TooltipProvider>
       <SidebarProvider
         defaultOpen={defaultSidebarOpen}
-        className="min-h-svh bg-canvas has-data-[variant=inset]:bg-canvas"
+        className="h-svh overflow-hidden bg-[linear-gradient(180deg,var(--canvas)_0%,var(--canvas-end)_100%)] has-data-[variant=inset]:bg-[linear-gradient(180deg,var(--canvas)_0%,var(--canvas-end)_100%)]"
         style={
           {
-            "--sidebar-width": "15.5rem",
-            "--sidebar-width-icon": "4.5rem",
+            "--sidebar-width": "16.5rem",
+            "--sidebar-width-icon": "4.75rem",
           } as CSSProperties
         }
       >
         <AppSidebar />
-        <SidebarInset className="overflow-hidden bg-background md:peer-data-[variant=inset]:m-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-2xl md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:border-border/70 md:peer-data-[variant=inset]:shadow-sm">
-          <AppHeader title={title} />
-          <div className="flex flex-1 flex-col overflow-auto">{children}</div>
+        <SidebarInset className="m-0 min-h-0 overflow-hidden bg-transparent md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-none md:peer-data-[variant=inset]:border-0 md:peer-data-[variant=inset]:shadow-none">
+          <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden p-3 md:pl-0">
+            <AppHeader title={title} />
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {children}
+            </div>
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

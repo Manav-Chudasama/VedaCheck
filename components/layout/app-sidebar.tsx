@@ -98,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar
       collapsible="icon"
       variant="inset"
-      className="border-none **:data-[slot=sidebar-inner]:rounded-2xl **:data-[slot=sidebar-inner]:border **:data-[slot=sidebar-inner]:border-border/70 **:data-[slot=sidebar-inner]:shadow-sm"
+      className="border-none **:data-[slot=sidebar-inner]:rounded-2xl **:data-[slot=sidebar-inner]:bg-background **:data-[slot=sidebar-inner]:shadow-[0_16px_48px_rgba(0,0,0,0.08),0_32px_48px_rgba(0,0,0,0.06)]"
       {...props}
     >
       <SidebarHeader className="gap-4 p-3 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2">
