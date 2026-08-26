@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { getAnswerSheetPageRaster } from "@/lib/assessment/page-store"
+import { getAnswerSheetPageRaster } from "@/lib/assessment/store"
 
 type RouteContext = {
   params: Promise<{

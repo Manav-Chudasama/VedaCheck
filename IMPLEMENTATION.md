@@ -102,6 +102,27 @@
 
 **Next:**
 
-- Full assessment job store + pipeline stages
-- Upload API that rasterizes and populates the page store
-- Gemini extract / map stages
+- Upload API that creates jobs and runs the pipeline
+- Gemini extract / map / grade AI deps
+- Wire UI polling to status + result
+
+## Phase 5 — Assessment job store + pipeline
+
+**Goal:** In-memory jobs with stage progress; deterministic bbox validation and view-model normalization; orchestrator with injectable AI deps.
+
+**Done:**
+
+- `lib/assessment/stages.ts` — stages, progress %, UI labels
+- `lib/assessment/store.ts` — `AssessmentJob` Map store (TTL 1h); page raster accessors
+- `lib/assessment/bbox.ts` — 0–1 / 0–1000 / pixel detection, clamp, validate
+- `lib/assessment/map-answers.ts` — deterministic label matching + LLM merge
+- `lib/assessment/normalize.ts` — questions/answers → `AssessmentViewModel`
+- `lib/assessment/pipeline.ts` — `runAssessmentPipeline` (read → extract → map → grade → ready)
+- `lib/assessment/status.ts` — status DTO for polling
+- `page-store.ts` re-exports store helpers for compatibility
+
+**Next:**
+
+- Implement Gemini-backed `PipelineAiDeps`
+- `POST /api/assessments` + status/result routes
+- Wire `AssessmentFlow` to real jobs
