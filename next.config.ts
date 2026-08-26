@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
     "@google/genai",
     "@napi-rs/canvas",
   ],
+  // Allow ~10MB uploads (+ multipart overhead) for assessment files.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
 };
 
 export default nextConfig;

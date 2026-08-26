@@ -142,5 +142,22 @@
 
 **Next:**
 
-- Upload + status/result API routes
-- Wire UI to real processing
+- Wire UI to real processing (React Query polling)
+
+## Phase 7 — Assessment API routes
+
+**Goal:** Upload + poll + fetch result + page images with server-side validation.
+
+**Done:**
+
+- `lib/upload/validate-upload.ts` — MIME/extension/size checks, filename sanitize
+- `POST /api/assessments` — multipart `questionPaper` + `answerSheet`; `202 { id }`; pipeline via `after()`
+- `GET /api/assessments/[id]/status` — stage / progress / label
+- `GET /api/assessments/[id]/result` — view model when ready (`409` processing, `422` failed)
+- `GET /api/assessments/[id]/pages/[page]` — WebP raster (nodejs runtime)
+- `maxDuration = 300` on POST; fail-fast if `GEMINI_API_KEY` missing
+
+**Next:**
+
+- Wire `AssessmentFlow` to these APIs
+- Staged extracting UI + unmatched answers panel

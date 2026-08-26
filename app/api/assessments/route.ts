@@ -1,0 +1,91 @@
+import { after, NextResponse } from "next/server"
+
+import { runGeminiAssessmentPipeline } from "@/lib/ai/run-pipeline"
+import { GeminiConfigError } from "@/lib/ai/errors"
+import { createAssessmentJob } from "@/lib/assessment/store"
+import {
+  parseAssessmentUploadForm,
+  parseEnableGradingFlag,
+} from "@/lib/upload/validate-upload"
+
+/** Allow long Gemini + rasterization work on supported hosts. */
+export const maxDuration = 300
+export const runtime = "nodejs"
+
+/**
+ * POST /api/assessments
+ * multipart/form-data: questionPaper, answerSheet [, enableGrading]
+ * Returns `{ id }` immediately; pipeline continues via `after()`.
+ */
+export async function POST(request: Request) {
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch {
+    return NextResponse.json(
+      {
+        error: {
+          field: "form",
+          message: "Expected multipart form data with uploaded files.",
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  const parsed = await parseAssessmentUploadForm(formData)
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 })
+  }
+
+  // Fail fast when the API key is missing (before creating a job).
+  if (!process.env.GEMINI_API_KEY?.trim()) {
+    return NextResponse.json(
+      {
+        error: {
+          field: "form",
+          message: new GeminiConfigError().message,
+        },
+      },
+      { status: 500 }
+    )
+  }
+
+  const enableGrading = parseEnableGradingFlag(formData)
+  const job = createAssessmentJob()
+
+  const questionPaper = {
+    data: parsed.questionPaper.buffer,
+    mimeType: parsed.questionPaper.mimeType,
+    fileName: parsed.questionPaper.fileName,
+  }
+  const answerSheet = {
+    data: parsed.answerSheet.buffer,
+    mimeType: parsed.answerSheet.mimeType,
+    fileName: parsed.answerSheet.fileName,
+  }
+
+  after(async () => {
+    try {
+      await runGeminiAssessmentPipeline(job.id, {
+        questionPaper,
+        answerSheet,
+        enableGrading,
+      })
+    } catch (error) {
+      // Pipeline already marks the job failed; log for server diagnostics.
+      const message =
+        error instanceof Error ? error.message : "Pipeline failed"
+      console.error(`[assessment ${job.id}] ${message}`)
+    }
+  })
+
+  return NextResponse.json(
+    {
+      id: job.id,
+      statusUrl: `/api/assessments/${job.id}/status`,
+      resultUrl: `/api/assessments/${job.id}/result`,
+    },
+    { status: 202 }
+  )
+}

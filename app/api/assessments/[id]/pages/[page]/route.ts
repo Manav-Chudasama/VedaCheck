@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 
 import { getAnswerSheetPageRaster } from "@/lib/assessment/store"
 
+export const runtime = "nodejs"
+
 type RouteContext = {
   params: Promise<{
     id: string
@@ -17,7 +19,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id, page: pageParam } = await context.params
   const page = Number.parseInt(pageParam, 10)
 
-  if (!id || !Number.isInteger(page) || page < 1) {
+  if (!id?.trim() || !Number.isInteger(page) || page < 1) {
     return NextResponse.json(
       { error: "Invalid assessment id or page number" },
       { status: 400 }
@@ -26,10 +28,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const raster = getAnswerSheetPageRaster(id, page)
   if (!raster) {
-    return NextResponse.json(
-      { error: "Page not found" },
-      { status: 404 }
-    )
+    return NextResponse.json({ error: "Page not found" }, { status: 404 })
   }
 
   return new NextResponse(new Uint8Array(raster.buffer), {
