@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/layout/app-shell"
-import { UploadScreen } from "@/components/upload/upload-screen"
+import { AssessmentFlow } from "@/components/assessment/assessment-flow"
 
 export default function Home() {
-  return (
-    <AppShell>
-      <UploadScreen />
-    </AppShell>
-  )
+  return <AssessmentFlow />
 }

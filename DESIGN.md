@@ -27,6 +27,7 @@ Measured from SVG artboard `1440×787`:
 - **Header** separate floating card (`h≈56`, `rx=16`, white @ ~75% + blur) — sticky
 - Main content sits **on the canvas** under the header
 - Viewport locked (`h-svh`, `overflow-hidden`) — no page scroll
+- **Extracting / loading:** sidebar collapses to icon rail; main area shows a white rounded panel with sparkle SVG + “Extracting…” (from `Loading state.png` / `extracting-state.svg`)
 
 ## Upload screen
 

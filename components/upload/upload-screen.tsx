@@ -8,12 +8,19 @@ import { UploadIllustration } from "@/components/upload/upload-illustration"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
+type UploadScreenProps = {
+  onStartMapping?: (files: {
+    questionPaper: File
+    answerSheet: File
+  }) => void
+}
+
 /**
  * Upload layout measured from `public/screens/Upload Screen - Empty State.svg`
  * (1440×787 artboard): soft title highlight, avatar, frosted dropzone tray,
  * dashed cards, pill CTA — all centered on the canvas (no large content card).
  */
-export function UploadScreen() {
+export function UploadScreen({ onStartMapping }: UploadScreenProps) {
   const [questionPaper, setQuestionPaper] = useState<File | null>(null)
   const [answerSheet, setAnswerSheet] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +45,6 @@ export function UploadScreen() {
 
           <UploadIllustration />
 
-          {/* Frosted tray wrapping both zones (SVG: white @ 50%, rx=24) */}
           <div className="grid w-full gap-3 rounded-3xl bg-background/50 p-3 shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:grid-cols-2 sm:gap-[17px] sm:p-3">
             <FileDropzone
               label="Upload"
@@ -77,7 +83,8 @@ export function UploadScreen() {
                 !canStartMapping && "opacity-45 hover:bg-cta"
               )}
               onClick={() => {
-                // Processing screen wires up in the next phase
+                if (!questionPaper || !answerSheet) return
+                onStartMapping?.({ questionPaper, answerSheet })
               }}
             >
               Start Mapping

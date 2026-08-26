@@ -51,6 +51,8 @@
   --color-file-chip: var(--file-chip);
   --color-pdf-badge: var(--pdf-badge);
   --color-remove-chip: var(--remove-chip);
+  --animate-sparkle-blink: sparkle-blink 1.6s ease-in-out infinite;
+  --animate-extracting-dot: extracting-dot 1.2s ease-in-out infinite;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -166,4 +168,44 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Extracting screen — staggered sparkle blink + ellipsis dots */
+@keyframes sparkle-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 0.28;
+    transform: scale(0.88);
+  }
+  70% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes extracting-dot {
+  0%,
+  20% {
+    opacity: 0.15;
+  }
+  40%,
+  60% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+@utility animate-sparkle-blink {
+  animation: var(--animate-sparkle-blink);
+}
+
+@utility animate-extracting-dot {
+  animation: var(--animate-extracting-dot);
 }

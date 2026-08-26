@@ -34,6 +34,14 @@
 
 **Next:**
 
-- Processing / loading screen after Start Mapping
+- Wire real AI pipeline behind extracting screen
 - Assessment viewer chrome
-- Then AI / document pipeline
+- Deploy
+
+## Phase 2.1 — Extracting / loading UI
+
+**Done:**
+
+- `public/images/extracting-state.svg` sparkle graphic
+- `components/processing/extracting-screen.tsx` — centered Extracting… state in white panel
+- `components/assessment/assessment-flow.tsx` — upload → extracting; collapses sidebar on Start Mapping
