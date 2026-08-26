@@ -97,6 +97,11 @@ export function AnswerSheetPanel({
         <div className="flex flex-col items-center gap-4 p-4">
           {pages.map((page) => {
             const pageRegions = regions.filter((r) => r.page === page.page)
+            const aspectRatio =
+              page.width && page.height
+                ? `${page.width} / ${page.height}`
+                : "658 / 824"
+
             return (
               <div
                 key={page.page}
@@ -107,10 +112,20 @@ export function AnswerSheetPanel({
                 className="relative w-full overflow-hidden rounded-lg bg-answer-paper shadow-md ring-1 ring-black/10"
                 style={{
                   maxWidth: `${658 * zoom}px`,
-                  aspectRatio: "658 / 824",
+                  aspectRatio,
                 }}
               >
-                <MockLinedPage page={page.page} />
+                {page.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- dynamic API rasters; avoid next/image remote config
+                  <img
+                    src={page.imageUrl}
+                    alt={`Answer sheet page ${page.page}`}
+                    className="absolute inset-0 size-full object-contain object-top"
+                    draggable={false}
+                  />
+                ) : (
+                  <MockLinedPage page={page.page} />
+                )}
                 {pageRegions.map((region, index) => (
                   <HighlightBox
                     key={`${page.page}-${index}`}
@@ -152,7 +167,7 @@ function HighlightBox({
   )
 }
 
-/** Placeholder answer-sheet page until real rasters ship from the pipeline. */
+/** Placeholder when no raster URL is available yet (mock / loading). */
 function MockLinedPage({ page }: { page: number }) {
   return (
     <div className="absolute inset-0">

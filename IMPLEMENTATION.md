@@ -79,6 +79,29 @@
 
 **Next:**
 
-- Document rasterizer (`lib/documents/`) + page image API
 - In-memory assessment store + pipeline orchestration
 - Wire upload → extracting → mapping to real API
+
+## Phase 4 — Document rasterization
+
+**Goal:** PDF/image → page WebP buffers; serve answer-sheet pages; viewer shows real images when URLs exist.
+
+**Done:**
+
+- `@napi-rs/canvas` for Node PDF rendering (pdfjs-dist 6 optional peer)
+- `lib/documents/`:
+  - `rasterize-pdf.ts` — pdfjs legacy + NodeCanvasFactory → PNG → WebP
+  - `rasterize-image.ts` / `encode-page.ts` — sharp rotate, downscale, WebP
+  - `rasterize.ts` — unified `rasterizeDocument`
+- `lib/assessment/page-store.ts` — in-memory page buffers by assessment id
+- `lib/assessment/to-answer-sheet-pages.ts` — rasters → viewer `AnswerSheetPage[]`
+- `GET /api/assessments/[id]/pages/[page]` — serves WebP from store
+- `AnswerSheetPage` extended with optional `imageUrl`, `width`, `height`
+- Viewer: real `<img>` when `imageUrl` present; lined placeholder otherwise
+- `next.config.ts` — `serverExternalPackages` includes `@napi-rs/canvas`
+
+**Next:**
+
+- Full assessment job store + pipeline stages
+- Upload API that rasterizes and populates the page store
+- Gemini extract / map stages

@@ -34,8 +34,16 @@ export type AssessmentItem = {
 
 export type AnswerSheetPage = {
   page: number
-  /** Placeholder label until real rasters exist */
   label: string
+  /**
+   * URL for the page raster (e.g. `/api/assessments/{id}/pages/{n}`).
+   * Omit to show the lined placeholder in the viewer.
+   */
+  imageUrl?: string
+  /** Pixel width of the stored raster (for aspect ratio / bbox scaling). */
+  width?: number
+  /** Pixel height of the stored raster. */
+  height?: number
 }
 
 export type AssessmentViewModel = {
