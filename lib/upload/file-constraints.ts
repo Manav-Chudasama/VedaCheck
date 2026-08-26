@@ -35,6 +35,19 @@ export function formatFileSize(bytes: number): string {
   return `${mb < 10 ? mb.toFixed(1) : Math.round(mb)} MB`
 }
 
+/** Compact size label matching filled-state SVG (`2MB • 2 Pages`). */
+export function formatCompactFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) {
+    const kb = bytes / 1024
+    const value = kb < 10 && !Number.isInteger(kb) ? kb.toFixed(1) : Math.round(kb)
+    return `${value}KB`
+  }
+  const mb = bytes / (1024 * 1024)
+  const value = mb < 10 && !Number.isInteger(mb) ? mb.toFixed(1) : Math.round(mb)
+  return `${value}MB`
+}
+
 export function isAcceptedUploadFile(file: File): boolean {
   const mimeOk = ACCEPTED_UPLOAD_MIME_TYPES.includes(
     file.type as (typeof ACCEPTED_UPLOAD_MIME_TYPES)[number]
@@ -59,4 +72,28 @@ export function fileTypeLabel(file: File): string {
     return "PDF"
   }
   return "Image"
+}
+
+/**
+ * Page count for the filled upload chip.
+ * Images → 1. PDFs → count `/Type /Page` markers (good enough until pdfjs pipeline).
+ */
+export async function getDocumentPageCount(file: File): Promise<number> {
+  if (fileTypeLabel(file) !== "PDF") return 1
+
+  try {
+    const buffer = await file.arrayBuffer()
+    const text = new TextDecoder("latin1").decode(buffer)
+    const pages = text.match(/\/Type\s*\/Page(?!\s*s)\b/g)
+    if (pages && pages.length > 0) return pages.length
+
+    const countMatches = [...text.matchAll(/\/Count\s+(\d+)/g)].map((m) =>
+      Number.parseInt(m[1], 10)
+    )
+    if (countMatches.length > 0) return Math.max(...countMatches)
+  } catch {
+    // Fall through
+  }
+
+  return 1
 }

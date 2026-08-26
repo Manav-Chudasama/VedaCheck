@@ -48,6 +48,9 @@
   --color-cta-disabled: var(--cta-disabled);
   --color-dropzone-stroke: var(--dropzone-stroke);
   --color-icon-well: var(--icon-well);
+  --color-file-chip: var(--file-chip);
+  --color-pdf-badge: var(--pdf-badge);
+  --color-remove-chip: var(--remove-chip);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -88,6 +91,9 @@
   --cta-disabled: #d9d9d9;
   --dropzone-stroke: #cecece;
   --icon-well: #f3f3f3;
+  --file-chip: #f6f6f6;
+  --pdf-badge: #e53935;
+  --remove-chip: #2b2b2b;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -132,6 +138,9 @@
   --cta-disabled: oklch(0.4 0 0);
   --dropzone-stroke: oklch(0.45 0 0);
   --icon-well: oklch(0.28 0 0);
+  --file-chip: oklch(0.32 0 0);
+  --pdf-badge: oklch(0.6 0.2 25);
+  --remove-chip: oklch(0.25 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

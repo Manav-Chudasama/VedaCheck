@@ -1,13 +1,14 @@
 "use client"
 
-import { useCallback, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useRef, useState } from "react"
 import { FileText, Upload, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
   ACCEPT_ATTR,
   fileTypeLabel,
-  formatFileSize,
+  formatCompactFileSize,
+  getDocumentPageCount,
   getUploadRejectionReason,
 } from "@/lib/upload/file-constraints"
 import { cn } from "@/lib/utils"
@@ -21,7 +22,7 @@ type FileDropzoneProps = {
   className?: string
 }
 
-/** Drop card: 373×179.5, rx≈19, dashed #CECECE, soft elevation — from empty-state SVG. */
+/** Drop card: 373×179.5, rx≈19, dashed #CECECE — from upload SVGs. */
 export function FileDropzone({
   label,
   labelAccent,
@@ -109,6 +110,7 @@ export function FileDropzone({
 
       {file ? (
         <UploadedFileCard
+          key={`${file.name}-${file.size}-${file.lastModified}`}
           file={file}
           onRemove={() => {
             onFileChange(null)
@@ -131,6 +133,7 @@ export function FileDropzone({
   )
 }
 
+/** Filled chip from `Upload Screen - filled state.svg`: #F6F6F6 pill, PDF badge, size • pages. */
 function UploadedFileCard({
   file,
   onRemove,
@@ -141,48 +144,95 @@ function UploadedFileCard({
   onReplace: () => void
 }) {
   const type = fileTypeLabel(file)
+  const [pageCount, setPageCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void getDocumentPageCount(file).then((count) => {
+      if (!cancelled) setPageCount(count)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [file])
+
+  const sizeLabel = formatCompactFileSize(file.size)
+  const pagesLabel =
+    pageCount == null
+      ? null
+      : `${pageCount} ${pageCount === 1 ? "Page" : "Pages"}`
 
   return (
     <div
-      className="relative w-full max-w-xs rounded-xl bg-background px-3.5 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.08)] ring-1 ring-black/5"
+      className="relative w-full max-w-[298px]"
       onClick={(event) => event.stopPropagation()}
     >
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 rounded-xl bg-file-chip px-3 py-3.5 text-left outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-brand/40"
+        onClick={onReplace}
+        title="Click to replace file"
+      >
+        {type === "PDF" ? (
+          <PdfBadge />
+        ) : (
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand">
+            <FileText className="size-5" />
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {file.name}
+          </p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{sizeLabel}</span>
+            {pagesLabel ? (
+              <>
+                <span
+                  className="inline-block size-1 shrink-0 rounded-full bg-muted-foreground"
+                  aria-hidden
+                />
+                <span>{pagesLabel}</span>
+              </>
+            ) : (
+              <>
+                <span
+                  className="inline-block size-1 shrink-0 rounded-full bg-muted-foreground"
+                  aria-hidden
+                />
+                <span>…</span>
+              </>
+            )}
+          </p>
+        </div>
+      </button>
+
       <Button
         type="button"
         variant="secondary"
         size="icon-xs"
-        className="absolute -top-2 -right-2 size-6 rounded-full bg-cta text-white hover:bg-cta/90 hover:text-white"
+        className="absolute -top-2 -right-2 size-[26px] rounded-full bg-remove-chip/80 text-white shadow-md hover:bg-remove-chip hover:text-white"
         aria-label={`Remove ${file.name}`}
         onClick={onRemove}
       >
-        <X className="size-3" />
+        <X className="size-3.5" />
       </Button>
+    </div>
+  )
+}
 
-      <button
-        type="button"
-        className="flex w-full items-start gap-3 text-left outline-none"
-        onClick={onReplace}
-        title="Click to replace file"
-      >
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-lg",
-            type === "PDF"
-              ? "bg-destructive/10 text-destructive"
-              : "bg-brand/10 text-brand"
-          )}
-        >
-          <FileText className="size-5" />
-        </div>
-        <div className="min-w-0 flex-1 pt-0.5">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {file.name}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {formatFileSize(file.size)} · {type}
-          </p>
-        </div>
-      </button>
+/** Red PDF document badge (35×40) from filled-state SVG. */
+function PdfBadge() {
+  return (
+    <div
+      className="relative flex h-10 w-[35px] shrink-0 items-end justify-center overflow-hidden rounded-[3px] bg-pdf-badge pb-[7px]"
+      aria-hidden
+    >
+      <span className="absolute top-0 right-0 size-2.5 rounded-bl-[3px] bg-black/15" />
+      <span className="text-[9px] font-bold leading-none tracking-wide text-white">
+        PDF
+      </span>
     </div>
   )
 }
