@@ -1,10 +1,12 @@
 import { generateStructuredJson } from "@/lib/ai/openai"
+import { pageRastersToAiImages } from "@/lib/ai/page-images"
 import {
   GRADE_ANSWERS_SYSTEM,
   buildGradeAnswersPrompt,
 } from "@/lib/ai/prompts/grade-answers"
 import { gradeAnswersResultSchema } from "@/lib/ai/schemas"
 import type { GradeAnswersResultDto } from "@/lib/ai/types"
+import type { PageRaster } from "@/lib/documents/types"
 
 export type GradeAnswersInput = {
   pairs: Array<{
@@ -13,7 +15,13 @@ export type GradeAnswersInput = {
     maxScore: number
     transcription: string
   }>
+  /** Optional answer-sheet page images covering the graded regions */
+  images?: PageRaster[]
 }
+
+/** Keep grading context large; only soft-cap extreme outliers. */
+const MAX_QUESTION_CHARS = 4000
+const MAX_TRANSCRIPTION_CHARS = 12000
 
 /**
  * Optional per-question scoring + teacher-facing feedback.
@@ -27,15 +35,20 @@ export async function gradeAnswersWithOpenAi(
 
   const pairs = input.pairs.map((pair) => ({
     ...pair,
-    questionText: truncate(pair.questionText, 600),
-    transcription: truncate(pair.transcription, 800),
+    questionText: softTruncate(pair.questionText, MAX_QUESTION_CHARS),
+    transcription: softTruncate(pair.transcription, MAX_TRANSCRIPTION_CHARS),
   }))
+
+  const images = input.images?.length
+    ? pageRastersToAiImages(input.images)
+    : []
 
   const result = await generateStructuredJson({
     schema: gradeAnswersResultSchema,
     schemaName: "grade_answers",
     systemInstruction: GRADE_ANSWERS_SYSTEM,
     userText: buildGradeAnswersPrompt({ pairs }),
+    images,
     temperature: 0.2,
   })
 
@@ -64,7 +77,7 @@ export async function gradeAnswersWithOpenAi(
   }
 }
 
-function truncate(text: string, max: number): string {
+function softTruncate(text: string, max: number): string {
   const trimmed = text.trim()
   if (trimmed.length <= max) return trimmed
   return `${trimmed.slice(0, max)}…`

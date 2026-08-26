@@ -8,6 +8,7 @@ import {
   mapAnswersDeterministic,
   mergeAnswerMappings,
 } from "@/lib/assessment/map-answers"
+import { normalizeQuestionsAndGroups } from "@/lib/assessment/normalize-groups"
 import { normalizeAssessment } from "@/lib/assessment/normalize"
 import { setJobStage, updateAssessmentJob, getAssessmentJob } from "@/lib/assessment/store"
 import type { PageRaster } from "@/lib/documents/types"
@@ -42,6 +43,8 @@ export type PipelineAiDeps = {
       maxScore: number
       transcription: string
     }>
+    /** Optional page images covering answer regions for vision grading */
+    images?: PageRaster[]
   }) => Promise<GradeAnswersResultDto>
 }
 
@@ -96,6 +99,14 @@ export async function runAssessmentPipeline(
       questionPaperPages
     )
 
+    const { questions: derivedQuestions } = normalizeQuestionsAndGroups({
+      questions: extractedQuestions.questions,
+      groups: extractedQuestions.groups ?? [],
+    })
+    const maxScoreByNumber = new Map(
+      derivedQuestions.map((q) => [q.number, q.maxScore])
+    )
+
     // --- extract answers ---
     setJobStage(jobId, "reading_answers")
     const questionNumbers = extractedQuestions.questions.map((q) => q.number)
@@ -142,25 +153,49 @@ export async function runAssessmentPipeline(
           )
           const answer = extractedAnswers.answers[m.answerIndex]
           if (!question || !answer) return null
+
+          const derived = maxScoreByNumber.get(question.number)
+          const explicit =
+            question.maxScore && question.maxScore > 0
+              ? question.maxScore
+              : undefined
+          const maxScore =
+            explicit ??
+            (derived && derived > 0 ? derived : undefined)
+
+          // Skip grading when marks are still unknown rather than inventing 1.
+          if (maxScore === undefined) return null
+
           return {
             questionNumber: question.number,
             questionText: question.text,
-            maxScore: question.maxScore && question.maxScore > 0
-              ? question.maxScore
-              : 1,
+            maxScore,
             transcription: answer.transcription,
           }
         })
         .filter((p): p is NonNullable<typeof p> => p !== null)
 
       if (pairs.length > 0) {
-        grades = await options.ai.gradeAnswers({ pairs })
+        // Pages referenced by graded answers — helps vision verify handwriting.
+        const pageSet = new Set<number>()
+        for (const m of mapping.mappings) {
+          if (!m.questionNumber) continue
+          const answer = extractedAnswers.answers[m.answerIndex]
+          for (const region of answer?.regions ?? []) {
+            if (Number.isInteger(region.page)) pageSet.add(region.page)
+          }
+        }
+        const images = answerSheetPages.filter((p) => pageSet.has(p.page))
+
+        grades = await options.ai.gradeAnswers({ pairs, images })
       }
     }
 
     const result = normalizeAssessment({
       assessmentId: jobId,
       questions: extractedQuestions.questions,
+      groups: extractedQuestions.groups ?? [],
+      totalMarks: extractedQuestions.totalMarks,
       answers: extractedAnswers.answers,
       mapping,
       answerSheetPages,

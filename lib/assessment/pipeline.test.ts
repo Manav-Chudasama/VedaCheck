@@ -70,6 +70,9 @@ describe("runAssessmentPipeline (mocked OpenAI)", () => {
     expect(byNumber["1"]?.status).toBe("answered")
     expect(byNumber["11(b)"]?.status).toBe("unanswered")
     expect(done?.result?.unmatchedAnswers.length).toBe(1)
+    expect(done?.result?.summary.paperMaxScore).toBe(9)
+    expect(done?.result?.summary.obtainedScore).toBe(9)
+    expect(done?.result?.groups.length).toBeGreaterThan(0)
     expect(done?.result?.pages[0]?.imageUrl).toBe(
       `/api/assessments/${job.id}/pages/1`
     )

@@ -198,3 +198,18 @@
 - Renamed pipeline entrypoints to `createOpenAiPipelineAiDeps` / `runOpenAiAssessmentPipeline`
 - Env: `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`, default `gpt-4o`)
 - Updated `AGENTS.md` §3.1 and related Gemini references
+
+## Phase 11 — Groups, marks, attempt-any-N, bbox refine
+
+**Goal:** MSBTE-style group marks, fair grading, full answer regions, paper totals in UI.
+
+**Done:**
+
+- Schemas/types: `totalMarks`, `QuestionGroup`, `AssessmentSummary`, `countedTowardTotal`
+- `normalize-groups.ts` — derive per-option marks from `group.maxScore / attemptCount`
+- `apply-attempt-rules.ts` — count only top-N scores per group toward totals
+- `bbox-refine.ts` — shrink overlapping answer regions on the same page
+- Prompts: extract groups/marks; full multi-page answer regions; fairer “any N” grading
+- Grading uses derived maxScore + optional page images; no hard fallback to 1/1
+- Viewer: grouped question panels, “Not counted” badge, Obtained X/Y summary
+- Tests: `groups.test.ts` + updated fixtures / normalize / pipeline

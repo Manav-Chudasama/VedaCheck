@@ -1,15 +1,18 @@
 import type {
   ExtractedAnswerDto,
   ExtractedQuestionDto,
+  ExtractedQuestionGroupDto,
   GradeAnswersResultDto,
   MapAnswersResultDto,
 } from "@/lib/ai/types"
+import { applyAttemptRules } from "@/lib/assessment/apply-attempt-rules"
 import { normalizeAnswerRegions, type PageSize } from "@/lib/assessment/bbox"
+import { refineOverlappingAnswerRegions } from "@/lib/assessment/bbox-refine"
+import { normalizeQuestionsAndGroups } from "@/lib/assessment/normalize-groups"
 import { toAnswerSheetPages } from "@/lib/assessment/to-answer-sheet-pages"
 import type {
   AssessmentItem,
   AssessmentViewModel,
-  Question,
   StudentAnswer,
 } from "@/lib/assessment/types"
 import type { PageRaster } from "@/lib/documents/types"
@@ -17,6 +20,8 @@ import type { PageRaster } from "@/lib/documents/types"
 export type NormalizeAssessmentInput = {
   assessmentId: string
   questions: ExtractedQuestionDto[]
+  groups?: ExtractedQuestionGroupDto[]
+  totalMarks?: number | null
   answers: ExtractedAnswerDto[]
   mapping: MapAnswersResultDto
   answerSheetPages: PageRaster[]
@@ -31,46 +36,12 @@ function buildPageSizeMap(pages: PageRaster[]): Map<number, PageSize> {
   return map
 }
 
-/**
- * Sort + dedupe extracted questions into domain Question records.
- * Preserves first occurrence of each question number; sorts by `order`.
- */
-export function normalizeQuestions(
-  questions: ExtractedQuestionDto[]
-): Question[] {
-  const seen = new Set<string>()
-  const unique: ExtractedQuestionDto[] = []
-
-  const sorted = [...questions].sort((a, b) => a.order - b.order)
-
-  for (const q of sorted) {
-    const number = q.number.trim()
-    if (!number || seen.has(number)) continue
-    seen.add(number)
-    unique.push({ ...q, number, text: q.text.trim() })
-  }
-
-  return unique.map((q, index) => ({
-    id: `q-${canonicalizeId(q.number)}-${index}`,
-    number: q.number,
-    text: q.text,
-    order: index,
-    maxScore:
-      q.maxScore === null || q.maxScore === undefined
-        ? undefined
-        : q.maxScore,
-  }))
-}
-
-function canonicalizeId(number: string): string {
-  return number.toLowerCase().replace(/[^a-z0-9]+/g, "-")
-}
-
 function buildStudentAnswer(input: {
   questionId: string | null
   answer: ExtractedAnswerDto
   pageSizes: Map<number, PageSize>
   grade?: { score: number; maxScore: number; feedback: string }
+  fallbackMaxScore?: number
 }): StudentAnswer | null {
   const regions = normalizeAnswerRegions(input.answer.regions, input.pageSizes)
   const transcription = input.answer.transcription.trim()
@@ -84,7 +55,7 @@ function buildStudentAnswer(input: {
     regions,
     confidence: input.answer.confidence ?? undefined,
     score: input.grade?.score,
-    maxScore: input.grade?.maxScore,
+    maxScore: input.grade?.maxScore ?? input.fallbackMaxScore,
     feedback: input.grade?.feedback,
   }
 }
@@ -96,7 +67,10 @@ function buildStudentAnswer(input: {
 export function normalizeAssessment(
   input: NormalizeAssessmentInput
 ): AssessmentViewModel {
-  const questions = normalizeQuestions(input.questions)
+  const { questions, groups } = normalizeQuestionsAndGroups({
+    questions: input.questions,
+    groups: input.groups ?? [],
+  })
   const pageSizes = buildPageSizeMap(input.answerSheetPages)
   const questionByNumber = new Map(questions.map((q) => [q.number, q]))
 
@@ -133,6 +107,7 @@ export function normalizeAssessment(
             feedback: grade.feedback,
           }
         : undefined,
+      fallbackMaxScore: question?.maxScore,
     })
 
     if (!studentAnswer) return
@@ -147,19 +122,54 @@ export function normalizeAssessment(
     }
   })
 
+  // Shrink heavily overlapping mapped/unmatched regions on the same page.
+  const refineTargets = [
+    ...answerByQuestionNumber.values(),
+    ...unmatchedAnswers,
+  ]
+  const refined = refineOverlappingAnswerRegions(refineTargets)
+  refineTargets.forEach((answer, index) => {
+    answer.regions = refined[index]?.regions ?? answer.regions
+  })
+
   const items: AssessmentItem[] = questions.map((question) => {
     const answer = answerByQuestionNumber.get(question.number) ?? null
 
     if (answer) {
+      // Prefer derived question maxScore on the answer when grade omitted it.
+      if (
+        answer.maxScore === undefined &&
+        question.maxScore !== undefined
+      ) {
+        answer.maxScore = question.maxScore
+      }
       return { question, answer, status: "answered" as const }
     }
 
     return { question, answer: null, status: "unanswered" as const }
   })
 
-  return {
+  const { items: scoredItems, summary } = applyAttemptRules({
     items,
+    groups,
+    paperMaxScore: input.totalMarks,
+  })
+
+  return {
+    items: scoredItems,
+    groups,
     pages: toAnswerSheetPages(input.assessmentId, input.answerSheetPages),
     unmatchedAnswers,
+    summary,
   }
+}
+
+/**
+ * Sort + dedupe extracted questions (no groups). Kept for unit tests / callers
+ * that only need the flat question list.
+ */
+export function normalizeQuestions(
+  questions: ExtractedQuestionDto[]
+): ReturnType<typeof normalizeQuestionsAndGroups>["questions"] {
+  return normalizeQuestionsAndGroups({ questions, groups: [] }).questions
 }

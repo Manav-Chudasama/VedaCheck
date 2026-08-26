@@ -59,6 +59,8 @@ describe("normalizeAssessment", () => {
     const result = normalizeAssessment({
       assessmentId: "test-assessment",
       questions: fixtureExtractQuestions.questions,
+      groups: fixtureExtractQuestions.groups,
+      totalMarks: fixtureExtractQuestions.totalMarks,
       answers: fixtureExtractAnswers.answers,
       mapping,
       answerSheetPages: [fakePage(1), fakePage(2)],
@@ -78,6 +80,12 @@ describe("normalizeAssessment", () => {
     expect(byNumber["1"]?.answer?.regions.length).toBe(2)
     expect(byNumber["2"]?.answer?.regions[0]?.bbox[0]).toBeCloseTo(0.1)
     expect(byNumber["1"]?.answer?.score).toBe(2)
+    expect(byNumber["11(a)"]?.answer?.score).toBe(5)
+    expect(byNumber["11(a)"]?.answer?.maxScore).toBe(5)
+
+    expect(result.groups.some((g) => g.number === "11")).toBe(true)
+    expect(result.summary.paperMaxScore).toBe(9)
+    expect(result.summary.obtainedScore).toBe(9)
 
     expect(result.unmatchedAnswers).toHaveLength(1)
     expect(result.unmatchedAnswers[0]?.transcription).toContain("Random margin")

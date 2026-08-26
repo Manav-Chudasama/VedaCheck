@@ -15,7 +15,7 @@ export async function extractQuestionsFromPages(
   pages: PageRaster[]
 ): Promise<ExtractQuestionsResultDto> {
   if (pages.length === 0) {
-    return { questions: [] }
+    return { totalMarks: null, groups: [], questions: [] }
   }
 
   return generateStructuredJsonFromImages({

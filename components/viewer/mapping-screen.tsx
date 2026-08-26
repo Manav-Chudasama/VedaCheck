@@ -111,6 +111,8 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
       <div className="min-h-0 flex-1">
         <QuestionPanel
           items={assessment.items}
+          groups={assessment.groups}
+          summary={assessment.summary}
           selectedId={selectedQuestionId}
           expandedIds={expandedIds}
           onSelect={selectQuestion}
@@ -142,12 +144,40 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="hidden h-full min-h-0 gap-3 lg:grid lg:grid-cols-2">
+      {assessment.summary.paperMaxScore > 0 ? (
+        <div className="mb-3 shrink-0 rounded-2xl bg-background/70 px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <p className="text-sm font-semibold tabular-nums text-foreground">
+            Obtained{" "}
+            <span className="text-cta">
+              {formatObtained(assessment.summary.obtainedScore)}
+            </span>
+            <span className="font-normal text-muted-foreground">
+              {" "}
+              / {formatObtained(assessment.summary.paperMaxScore)}
+            </span>
+          </p>
+          {assessment.summary.groupScores.length > 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {assessment.summary.groupScores
+                .map((g) => {
+                  const group = assessment.groups.find(
+                    (gr) => gr.id === g.groupId
+                  )
+                  const label = group ? `Q${group.number}` : g.groupId
+                  return `${label} ${formatObtained(g.obtained)}/${formatObtained(g.maxScore)}`
+                })
+                .join(" · ")}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="hidden min-h-0 flex-1 gap-3 lg:grid lg:grid-cols-2">
         {questionsColumn}
         {answerPanel}
       </div>
 
-      <div className="flex h-full min-h-0 flex-col lg:hidden">
+      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
         <Tabs
           value={mobileTab}
           onValueChange={setMobileTab}
@@ -183,4 +213,8 @@ export function MappingScreen({ assessment }: MappingScreenProps) {
       </div>
     </div>
   )
+}
+
+function formatObtained(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }

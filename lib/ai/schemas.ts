@@ -26,6 +26,30 @@ export const answerRegionSchema = z.object({
   bbox: bboxSchema,
 })
 
+export const extractedQuestionGroupSchema = z.object({
+  number: z.string().min(1).describe('Group number as printed, e.g. "1"'),
+  title: z
+    .string()
+    .describe(
+      'Section instruction, e.g. "Attempt any FIVE of the following"'
+    ),
+  attemptCount: z
+    .number()
+    .int()
+    .positive()
+    .describe("How many options the student must attempt"),
+  optionCount: z
+    .number()
+    .int()
+    .positive()
+    .describe("How many options are printed under this group"),
+  maxScore: z
+    .number()
+    .nonnegative()
+    .nullable()
+    .describe("Total marks for the group if printed; otherwise null"),
+})
+
 export const extractedQuestionSchema = z.object({
   number: z
     .string()
@@ -41,10 +65,22 @@ export const extractedQuestionSchema = z.object({
     .number()
     .nonnegative()
     .nullable()
-    .describe("Marks for this question if printed; otherwise null"),
+    .describe("Marks for this question if printed per item; otherwise null"),
+  groupNumber: z
+    .string()
+    .nullable()
+    .describe(
+      'Parent group number when this is a sub-part, e.g. "1" for "1(a)"; null if standalone'
+    ),
 })
 
 export const extractQuestionsResultSchema = z.object({
+  totalMarks: z
+    .number()
+    .nonnegative()
+    .nullable()
+    .describe("Total marks from the paper header if printed; otherwise null"),
+  groups: z.array(extractedQuestionGroupSchema),
   questions: z.array(extractedQuestionSchema),
 })
 

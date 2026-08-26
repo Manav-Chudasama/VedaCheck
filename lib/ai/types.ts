@@ -10,6 +10,15 @@ export type AiImagePart = {
   data: Buffer | Uint8Array | string
 }
 
+export type ExtractedQuestionGroupDto = {
+  /** Printed group number, e.g. "1" */
+  number: string
+  title: string
+  attemptCount: number
+  optionCount: number
+  maxScore: number | null
+}
+
 export type ExtractedQuestionDto = {
   /** Exact printed label, e.g. "11(a)" or "Q2" */
   number: string
@@ -17,9 +26,14 @@ export type ExtractedQuestionDto = {
   /** 0-based printed order */
   order: number
   maxScore?: number | null
+  /** Parent group number when this is a sub-part, e.g. "1" for "1(a)" */
+  groupNumber?: string | null
 }
 
 export type ExtractQuestionsResultDto = {
+  /** Total marks from the paper header when printed, else null */
+  totalMarks: number | null
+  groups: ExtractedQuestionGroupDto[]
   questions: ExtractedQuestionDto[]
 }
 

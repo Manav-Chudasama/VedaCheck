@@ -7,31 +7,86 @@ import type {
 
 /** Sub-parts + normal questions in printed order. */
 export const fixtureExtractQuestions: ExtractQuestionsResultDto = {
+  totalMarks: 9,
+  groups: [
+    {
+      number: "11",
+      title: "Attempt any ONE of the following",
+      attemptCount: 1,
+      optionCount: 2,
+      maxScore: 5,
+    },
+  ],
   questions: [
     {
       number: "1",
       text: "What is photosynthesis?",
       order: 0,
       maxScore: 2,
+      groupNumber: null,
     },
     {
       number: "2",
       text: "Name the organelle where photosynthesis occurs.",
       order: 1,
       maxScore: 2,
+      groupNumber: null,
     },
     {
       number: "11(a)",
       text: "Define osmosis.",
       order: 2,
-      maxScore: 3,
+      maxScore: null,
+      groupNumber: "11",
     },
     {
       number: "11(b)",
       text: "Give one example of osmosis in living cells.",
       order: 3,
-      maxScore: 2,
+      maxScore: null,
+      groupNumber: "11",
     },
+  ],
+}
+
+/**
+ * MSBTE-style Winter 2022 shaped groups for mark derivation tests.
+ * Group 1: attempt 5 of 7 for 10 → 2 marks each
+ * Group 2: attempt 3 of 4 for 12 → 4 marks each
+ */
+export const fixtureMsbteStyleQuestions: ExtractQuestionsResultDto = {
+  totalMarks: 70,
+  groups: [
+    {
+      number: "1",
+      title: "Attempt any FIVE of the following",
+      attemptCount: 5,
+      optionCount: 7,
+      maxScore: 10,
+    },
+    {
+      number: "2",
+      title: "Attempt any THREE of the following",
+      attemptCount: 3,
+      optionCount: 4,
+      maxScore: 12,
+    },
+  ],
+  questions: [
+    ...(["a", "b", "c", "d", "e", "f", "g"] as const).map((part, index) => ({
+      number: `1(${part})`,
+      text: `Question 1 part ${part}`,
+      order: index,
+      maxScore: null as number | null,
+      groupNumber: "1",
+    })),
+    ...(["a", "b", "c", "d"] as const).map((part, index) => ({
+      number: `2(${part})`,
+      text: `Question 2 part ${part}`,
+      order: 7 + index,
+      maxScore: null as number | null,
+      groupNumber: "2",
+    })),
   ],
 }
 
@@ -100,8 +155,8 @@ export const fixtureGrades: GradeAnswersResultDto = {
     },
     {
       questionNumber: "11(a)",
-      score: 3,
-      maxScore: 3,
+      score: 5,
+      maxScore: 5,
       feedback: "Accurate definition.",
     },
   ],

@@ -67,6 +67,13 @@ export function QuestionCard({
               typeof maxScore === "number" ? (
                 <ScoreBadge score={score} maxScore={maxScore} />
               ) : null}
+              {status === "answered" &&
+              question.countedTowardTotal === false &&
+              typeof score === "number" ? (
+                <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-muted px-2 text-[10px] font-medium text-muted-foreground">
+                  Not counted
+                </span>
+              ) : null}
               {status === "unanswered" || status === "unmatched" ? (
                 <StatusBadge status={status} />
               ) : null}

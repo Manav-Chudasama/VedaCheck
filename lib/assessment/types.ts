@@ -1,9 +1,24 @@
-/** Domain types for the assessment viewer (UI-ready; pipeline will populate later). */
+/** Domain types for the assessment viewer. */
 
 export type AnswerRegion = {
   page: number
   /** Normalized [x1, y1, x2, y2] in 0–1 relative to the page image. */
   bbox: [number, number, number, number]
+}
+
+export type QuestionGroup = {
+  id: string
+  /** Printed group number, e.g. "1", "2" */
+  number: string
+  /** Instruction text, e.g. "Attempt any FIVE of the following" */
+  title: string
+  /** How many options the student must attempt */
+  attemptCount: number
+  /** How many options are printed in the group */
+  optionCount: number
+  /** Total marks for the group (from the paper) */
+  maxScore: number
+  questionIds: string[]
 }
 
 export type Question = {
@@ -12,6 +27,9 @@ export type Question = {
   text: string
   order: number
   maxScore?: number
+  groupId?: string
+  /** After attempt-any-N selection: whether this score counts toward totals */
+  countedTowardTotal?: boolean
 }
 
 export type StudentAnswer = {
@@ -46,8 +64,24 @@ export type AnswerSheetPage = {
   height?: number
 }
 
+export type GroupScoreSummary = {
+  groupId: string
+  obtained: number
+  maxScore: number
+  countedQuestionIds: string[]
+  excludedQuestionIds: string[]
+}
+
+export type AssessmentSummary = {
+  paperMaxScore: number
+  obtainedScore: number
+  groupScores: GroupScoreSummary[]
+}
+
 export type AssessmentViewModel = {
   items: AssessmentItem[]
+  groups: QuestionGroup[]
   pages: AnswerSheetPage[]
   unmatchedAnswers: StudentAnswer[]
+  summary: AssessmentSummary
 }
