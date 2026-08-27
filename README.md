@@ -19,10 +19,11 @@
 
 <p align="center">
   <a href="#-screenshots">Screenshots</a> ·
+  <a href="#-approach">Approach</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-quick-start">Quick start</a> ·
-  <a href="#-tech-stack">Tech stack</a>
+  <a href="#-assumptions--limitations">Assumptions</a>
 </p>
 
 ---
@@ -64,6 +65,19 @@ VedaCheck turns two uploads into a reviewable assessment:
 | Unclear blanks vs missing OCR | Unanswered and unmatched blocks called out |
 
 Built for papers like MSBTE-style sections (“Attempt any FIVE… : 10 Marks”) as well as flatter question lists.
+
+---
+
+## Approach
+
+VedaCheck is a staged **server-side pipeline** with an in-memory job store (no auth, no database).
+
+1. **Rasterize first** — PDFs and images become page WebP rasters (`pdfjs-dist` + `@napi-rs/canvas` + `sharp`). One PDF **or** multiple page images per upload slot. Vision never receives raw PDFs.
+2. **Extract with structured OpenAI (gpt-4o)** — Zod schemas for questions (incl. groups / marks), handwritten answers + normalized bboxes, optional mapping, and grading. Prompts live in dedicated modules; model output is validated before use.
+3. **Deterministic post-processing over LLM guessing** — label-based answer mapping first (LLM only when ambiguous); derive per-option marks from `group.maxScore / attemptCount`; clamp / refine overlapping bboxes; after grading, count only the top **N** scores per “attempt any N” group toward **Obtained X / Y**.
+4. **Viewer** — side-by-side questions and answer sheet; selecting a question scrolls to and highlights the exact region(s). Unanswered and unmatched blocks stay visible.
+
+**Model:** OpenAI **gpt-4o** for multimodal document/handwriting understanding and reliable structured JSON on a free/paid tier.
 
 ---
 
@@ -191,13 +205,24 @@ vedacheck/
 
 ---
 
-## Assumptions & limits
+## Assumptions & limitations
 
-- Clear scans / photos work best; heavy blur or extreme skew reduces accuracy
-- Handwriting should be reasonably legible for transcription and grading
-- Sessions are ephemeral — refresh or TTL clears in-memory jobs
-- Large multi-page PDFs take longer (rasterization + several vision round-trips)
-- Group marks are most accurate when the paper prints section totals and attempt rules clearly
+**Assumptions**
+
+- One question paper and **one** student’s answer sheet per run
+- Each upload slot is either **one PDF** or **multiple page images** (not mixed)
+- Printed numbering and “attempt any N” / section marks are readable on the paper
+- Handwriting is in a language the model handles well (English-focused testing)
+- Scans/photos are upright enough after EXIF/orientation handling
+
+**Limitations**
+
+- Accuracy depends on scan quality, handwriting legibility, and OpenAI vision limits — blur, glare, heavy skew, or tiny print can miss questions or misplace boxes
+- Grading is assistive, not exam-board authoritative; “any N” wording helps but edge cases remain
+- Jobs and page images are **in-memory only** (TTL) — refresh or idle expiry loses the session; not for production multi-user storage
+- Large multi-page sheets are slower and more expensive (many vision calls); soft caps apply (e.g. ~30 images / 10MB per file)
+- No auth, multi-student batching, or manual teacher re-labeling tools in this version
+- Deployed serverless hosts need enough **timeout / memory** for rasterize + OpenAI round-trips
 
 ---
 
