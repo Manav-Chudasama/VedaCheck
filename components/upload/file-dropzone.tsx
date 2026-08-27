@@ -102,7 +102,7 @@ export function FileDropzone({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       className={cn(
-        "relative flex min-h-[160px] flex-1 flex-col items-center justify-center rounded-[19px] border border-dashed border-dropzone-stroke bg-background px-4 py-6 shadow-[0_16px_48px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:min-h-[179px]",
+        "relative flex min-h-[160px] w-full flex-col items-center justify-center rounded-[19px] border border-dashed border-dropzone-stroke bg-background px-4 py-6 shadow-[0_16px_48px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:min-h-[179px]",
         !hasFiles && "cursor-pointer",
         isDragging && "border-brand bg-brand/5 ring-2 ring-brand/25",
         className
@@ -123,10 +123,10 @@ export function FileDropzone({
 
       {hasFiles ? (
         <div
-          className="flex w-full max-w-[320px] flex-col gap-2"
+          className="flex w-full max-w-[320px] flex-col gap-2 px-1 pt-1"
           onClick={(event) => event.stopPropagation()}
         >
-          <ul className="flex max-h-[140px] flex-col gap-2 overflow-y-auto pr-0.5">
+          <ul className="flex flex-col gap-2.5">
             {files.map((file, index) => (
               <li key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
                 <UploadedFileCard

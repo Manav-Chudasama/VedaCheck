@@ -52,8 +52,10 @@ export function AppShell({
             <AppHeader title={title} />
             <div
               className={cn(
-                "flex min-h-0 flex-1 flex-col overflow-hidden",
-                contentMode === "panel" && "min-h-0"
+                "flex min-h-0 flex-1 flex-col",
+                contentMode === "panel"
+                  ? "overflow-hidden"
+                  : "no-scrollbar overflow-y-auto overscroll-contain"
               )}
             >
               {children}

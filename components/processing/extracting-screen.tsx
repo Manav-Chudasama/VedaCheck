@@ -10,13 +10,13 @@ import {
 } from "@/lib/assessment/stages"
 import { cn } from "@/lib/utils"
 
-const VISIBLE_STAGES: ProcessingStage[] = [
+const VISIBLE_STAGES = [
   "reading",
   "extracting_questions",
   "reading_answers",
   "mapping",
   "grading",
-]
+] as const satisfies readonly ProcessingStage[]
 
 /** Short labels for the desktop horizontal stepper. */
 const SHORT_STAGE_LABELS: Record<(typeof VISIBLE_STAGES)[number], string> = {

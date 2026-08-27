@@ -240,3 +240,12 @@
 @utility animate-extracting-dot {
   animation: var(--animate-extracting-dot);
 }
+
+/** Hide scrollbars while keeping scroll (upload canvas, sidebars). */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
