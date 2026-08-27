@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils"
 
 type UploadScreenProps = {
   onStartMapping?: (files: {
-    questionPaper: File
-    answerSheet: File
+    questionPaper: File[]
+    answerSheet: File[]
   }) => void
   isSubmitting?: boolean
 }
@@ -25,12 +25,12 @@ export function UploadScreen({
   onStartMapping,
   isSubmitting = false,
 }: UploadScreenProps) {
-  const [questionPaper, setQuestionPaper] = useState<File | null>(null)
-  const [answerSheet, setAnswerSheet] = useState<File | null>(null)
+  const [questionPaper, setQuestionPaper] = useState<File[]>([])
+  const [answerSheet, setAnswerSheet] = useState<File[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const canStartMapping =
-    Boolean(questionPaper && answerSheet) && !isSubmitting
+    questionPaper.length > 0 && answerSheet.length > 0 && !isSubmitting
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -44,7 +44,7 @@ export function UploadScreen({
               </span>
             </h1>
             <p className="text-sm text-muted-foreground sm:text-base">
-              Upload both files to get started
+              One PDF per side, or multiple page images
             </p>
           </div>
 
@@ -54,20 +54,20 @@ export function UploadScreen({
             <FileDropzone
               label="Upload"
               labelAccent="Question Paper"
-              file={questionPaper}
-              onFileChange={(file) => {
+              files={questionPaper}
+              onFilesChange={(next) => {
                 setError(null)
-                setQuestionPaper(file)
+                setQuestionPaper(next)
               }}
               onError={setError}
             />
             <FileDropzone
               label="Upload"
               labelAccent="Answer Sheet"
-              file={answerSheet}
-              onFileChange={(file) => {
+              files={answerSheet}
+              onFilesChange={(next) => {
                 setError(null)
-                setAnswerSheet(file)
+                setAnswerSheet(next)
               }}
               onError={setError}
             />
@@ -88,7 +88,13 @@ export function UploadScreen({
                 !canStartMapping && "opacity-45 hover:bg-cta"
               )}
               onClick={() => {
-                if (!questionPaper || !answerSheet || isSubmitting) return
+                if (
+                  questionPaper.length === 0 ||
+                  answerSheet.length === 0 ||
+                  isSubmitting
+                ) {
+                  return
+                }
                 onStartMapping?.({ questionPaper, answerSheet })
               }}
             >
@@ -98,7 +104,7 @@ export function UploadScreen({
               ) : null}
             </Button>
             <p className="max-w-sm text-center text-xs text-muted-foreground">
-              Once both files are uploaded, you&apos;ll be able to map answers
+              Once both sides are uploaded, you&apos;ll be able to map answers
               with questions.
             </p>
           </div>

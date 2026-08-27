@@ -48,15 +48,27 @@ async function readErrorMessage(response: Response): Promise<string> {
 
 /**
  * Upload question paper + answer sheet; returns assessment job id.
+ * Pass one PDF or multiple page images per side.
  */
 export async function createAssessment(files: {
-  questionPaper: File
-  answerSheet: File
+  questionPaper: File | File[]
+  answerSheet: File | File[]
   enableGrading?: boolean
 }): Promise<CreateAssessmentResponse> {
   const formData = new FormData()
-  formData.append("questionPaper", files.questionPaper)
-  formData.append("answerSheet", files.answerSheet)
+  const questionPapers = Array.isArray(files.questionPaper)
+    ? files.questionPaper
+    : [files.questionPaper]
+  const answerSheets = Array.isArray(files.answerSheet)
+    ? files.answerSheet
+    : [files.answerSheet]
+
+  for (const file of questionPapers) {
+    formData.append("questionPaper", file)
+  }
+  for (const file of answerSheets) {
+    formData.append("answerSheet", file)
+  }
   if (files.enableGrading === false) {
     formData.append("enableGrading", "false")
   }

@@ -55,6 +55,49 @@ export async function rasterizeDocument(
   )
 }
 
+/**
+ * Rasterize one PDF, one image, or an ordered sequence of page images.
+ * Multiple parts must all be images (not PDFs).
+ */
+export async function rasterizeDocumentParts(
+  parts: RasterizeDocumentInput[],
+  options?: RasterizeOptions
+): Promise<PageRaster[]> {
+  if (parts.length === 0) {
+    throw new DocumentRasterizeError("No document parts to rasterize")
+  }
+
+  if (parts.length === 1) {
+    return rasterizeDocument(parts[0]!, options)
+  }
+
+  for (const part of parts) {
+    if (isPdf(part.mimeType, part.fileName)) {
+      throw new DocumentRasterizeError(
+        "Multiple PDFs are not supported — upload one PDF or multiple images"
+      )
+    }
+    if (!isImage(part.mimeType, part.fileName)) {
+      throw new DocumentRasterizeError(
+        `Unsupported document type: ${part.mimeType ?? part.fileName ?? "unknown"}`
+      )
+    }
+  }
+
+  const pages: PageRaster[] = []
+  for (let index = 0; index < parts.length; index++) {
+    const part = parts[index]!
+    const [raster] = await rasterizeImage(part.data, options)
+    if (!raster) {
+      throw new DocumentRasterizeError(
+        `Failed to rasterize image page ${index + 1}`
+      )
+    }
+    pages.push({ ...raster, page: index + 1 })
+  }
+  return pages
+}
+
 export function pageRasterToDataUrl(page: PageRaster): string {
   return `data:${page.mimeType};base64,${page.buffer.toString("base64")}`
 }

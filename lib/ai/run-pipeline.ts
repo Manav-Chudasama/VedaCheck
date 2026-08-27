@@ -1,13 +1,13 @@
 import { createOpenAiPipelineAiDeps } from "@/lib/ai/pipeline-deps"
 import {
   runAssessmentPipeline,
-  type PipelineDocument,
+  type PipelineDocumentInput,
   type RunAssessmentPipelineOptions,
 } from "@/lib/assessment/pipeline"
 
 export type RunOpenAiAssessmentOptions = {
-  questionPaper: PipelineDocument
-  answerSheet: PipelineDocument
+  questionPaper: PipelineDocumentInput
+  answerSheet: PipelineDocumentInput
   enableGrading?: boolean
   enableLlmMapping?: boolean
   onlyWhenAmbiguous?: boolean

@@ -78,8 +78,8 @@ export function AssessmentFlow() {
   }
 
   const handleStartMapping = async (files: {
-    questionPaper: File
-    answerSheet: File
+    questionPaper: File[]
+    answerSheet: File[]
   }) => {
     setFlowError(null)
     setAssessment(null)

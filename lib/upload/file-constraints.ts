@@ -1,6 +1,8 @@
 /** Shared upload constraints — UI validation before the processing pipeline. */
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024 // 10MB
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024 // 10MB per file
+/** Max images when uploading page photos instead of a PDF. */
+export const MAX_IMAGE_PAGES = 30
 
 export const ACCEPTED_UPLOAD_MIME_TYPES = [
   "application/pdf",
@@ -24,6 +26,96 @@ export const ACCEPT_ATTR = [
 ].join(",")
 
 export type UploadSlot = "questionPaper" | "answerSheet"
+
+export function isPdfFile(file: File): boolean {
+  return (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  )
+}
+
+export function isImageFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true
+  const name = file.name.toLowerCase()
+  return (
+    name.endsWith(".png") ||
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".webp")
+  )
+}
+
+/**
+ * Merge newly picked files into the current selection.
+ * PDF → exactly one file. Images → multiple (append). No PDF+image mix.
+ */
+export function mergeUploadSelection(
+  current: File[],
+  incoming: File[]
+): { ok: true; files: File[] } | { ok: false; message: string } {
+  if (incoming.length === 0) {
+    return { ok: true, files: current }
+  }
+
+  for (const file of incoming) {
+    const reason = getUploadRejectionReason(file)
+    if (reason) return { ok: false, message: reason }
+  }
+
+  const incomingHasPdf = incoming.some(isPdfFile)
+  const incomingHasImage = incoming.some(isImageFile)
+  const currentHasPdf = current.some(isPdfFile)
+  const currentHasImage = current.some(isImageFile)
+
+  if (incomingHasPdf && incomingHasImage) {
+    return {
+      ok: false,
+      message: "Use either one PDF or multiple images — not both.",
+    }
+  }
+
+  if (incomingHasPdf) {
+    if (incoming.length > 1) {
+      return { ok: false, message: "Upload only one PDF." }
+    }
+    if (currentHasImage) {
+      return {
+        ok: false,
+        message: "Remove images first, or replace with a single PDF.",
+      }
+    }
+    // Replace any existing PDF with the new one.
+    return { ok: true, files: [incoming[0]!] }
+  }
+
+  // Images path
+  if (currentHasPdf) {
+    return {
+      ok: false,
+      message: "Remove the PDF first, or add images instead of a PDF.",
+    }
+  }
+
+  const next = [...current]
+  for (const file of incoming) {
+    const duplicate = next.some(
+      (existing) =>
+        existing.name === file.name &&
+        existing.size === file.size &&
+        existing.lastModified === file.lastModified
+    )
+    if (!duplicate) next.push(file)
+  }
+
+  if (next.length > MAX_IMAGE_PAGES) {
+    return {
+      ok: false,
+      message: `You can upload at most ${MAX_IMAGE_PAGES} images.`,
+    }
+  }
+
+  return { ok: true, files: next }
+}
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`

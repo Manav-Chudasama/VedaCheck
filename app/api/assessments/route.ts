@@ -14,7 +14,8 @@ export const runtime = "nodejs"
 
 /**
  * POST /api/assessments
- * multipart/form-data: questionPaper, answerSheet [, enableGrading]
+ * multipart/form-data: questionPaper (1+), answerSheet (1+) [, enableGrading]
+ * Each field: one PDF or multiple images (repeat the field name).
  * Returns `{ id }` immediately; pipeline continues via `after()`.
  */
 export async function POST(request: Request) {
@@ -54,16 +55,16 @@ export async function POST(request: Request) {
   const enableGrading = parseEnableGradingFlag(formData)
   const job = createAssessmentJob()
 
-  const questionPaper = {
-    data: parsed.questionPaper.buffer,
-    mimeType: parsed.questionPaper.mimeType,
-    fileName: parsed.questionPaper.fileName,
-  }
-  const answerSheet = {
-    data: parsed.answerSheet.buffer,
-    mimeType: parsed.answerSheet.mimeType,
-    fileName: parsed.answerSheet.fileName,
-  }
+  const questionPaper = parsed.questionPaper.map((part) => ({
+    data: part.buffer,
+    mimeType: part.mimeType,
+    fileName: part.fileName,
+  }))
+  const answerSheet = parsed.answerSheet.map((part) => ({
+    data: part.buffer,
+    mimeType: part.mimeType,
+    fileName: part.fileName,
+  }))
 
   after(async () => {
     try {

@@ -1,6 +1,7 @@
 import {
   ACCEPTED_UPLOAD_EXTENSIONS,
   ACCEPTED_UPLOAD_MIME_TYPES,
+  MAX_IMAGE_PAGES,
   MAX_UPLOAD_BYTES,
 } from "@/lib/upload/file-constraints"
 
@@ -64,9 +65,25 @@ function isAcceptedMime(mimeType: string): boolean {
   )
 }
 
+function isPdfMime(mimeType: string, fileName: string): boolean {
+  return (
+    mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf")
+  )
+}
+
+function isImageMime(mimeType: string, fileName: string): boolean {
+  if (mimeType.startsWith("image/")) return true
+  const name = fileName.toLowerCase()
+  return (
+    name.endsWith(".png") ||
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".webp")
+  )
+}
+
 /**
  * Validate a single multipart File field (MIME, extension, size).
- * Returns a structured error message or null when valid.
  */
 export function getServerUploadRejectionReason(
   file: File,
@@ -83,46 +100,89 @@ export function getServerUploadRejectionReason(
     return `${label}: file is empty.`
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return `${label}: file must be 10MB or smaller.`
+    return `${label}: each file must be 10MB or smaller.`
   }
   return null
 }
 
 /**
+ * Enforce one PDF XOR multiple images for a slot.
+ */
+export function validateUploadSlotFiles(
+  files: File[],
+  field: "questionPaper" | "answerSheet"
+): string | null {
+  const label = FIELD_LABELS[field]
+
+  if (files.length === 0) {
+    return `${label} file is required.`
+  }
+
+  for (const file of files) {
+    const reason = getServerUploadRejectionReason(file, field)
+    if (reason) return reason
+  }
+
+  const metas = files.map((file) => {
+    const fileName = sanitizeUploadFileName(file.name || field)
+    const mimeType = resolveUploadMimeType(file.type, fileName)
+    return { fileName, mimeType }
+  })
+
+  const pdfCount = metas.filter((m) => isPdfMime(m.mimeType, m.fileName)).length
+  const imageCount = metas.filter((m) =>
+    isImageMime(m.mimeType, m.fileName)
+  ).length
+
+  if (pdfCount > 0 && imageCount > 0) {
+    return `${label}: use either one PDF or multiple images — not both.`
+  }
+
+  if (pdfCount > 0) {
+    if (files.length > 1) {
+      return `${label}: upload only one PDF.`
+    }
+    return null
+  }
+
+  if (imageCount !== files.length) {
+    return `${label}: unsupported file type.`
+  }
+
+  if (files.length > MAX_IMAGE_PAGES) {
+    return `${label}: at most ${MAX_IMAGE_PAGES} images.`
+  }
+
+  return null
+}
+
+function collectFieldFiles(
+  formData: FormData,
+  field: "questionPaper" | "answerSheet"
+): File[] {
+  return formData
+    .getAll(field)
+    .filter((entry): entry is File => entry instanceof File && entry.size >= 0)
+}
+
+/**
  * Read + validate both required upload fields from multipart FormData.
+ * Each field may be one PDF or one-or-more images (same field name repeated).
  */
 export async function parseAssessmentUploadForm(
   formData: FormData
 ): Promise<
-  | { ok: true; questionPaper: ValidatedUpload; answerSheet: ValidatedUpload }
+  | {
+      ok: true
+      questionPaper: ValidatedUpload[]
+      answerSheet: ValidatedUpload[]
+    }
   | { ok: false; error: UploadValidationError }
 > {
-  const questionPaperFile = formData.get("questionPaper")
-  const answerSheetFile = formData.get("answerSheet")
+  const questionPaperFiles = collectFieldFiles(formData, "questionPaper")
+  const answerSheetFiles = collectFieldFiles(formData, "answerSheet")
 
-  if (!(questionPaperFile instanceof File)) {
-    return {
-      ok: false,
-      error: {
-        field: "questionPaper",
-        message: "Question paper file is required.",
-      },
-    }
-  }
-  if (!(answerSheetFile instanceof File)) {
-    return {
-      ok: false,
-      error: {
-        field: "answerSheet",
-        message: "Answer sheet file is required.",
-      },
-    }
-  }
-
-  const qpReason = getServerUploadRejectionReason(
-    questionPaperFile,
-    "questionPaper"
-  )
+  const qpReason = validateUploadSlotFiles(questionPaperFiles, "questionPaper")
   if (qpReason) {
     return {
       ok: false,
@@ -130,10 +190,7 @@ export async function parseAssessmentUploadForm(
     }
   }
 
-  const asReason = getServerUploadRejectionReason(
-    answerSheetFile,
-    "answerSheet"
-  )
+  const asReason = validateUploadSlotFiles(answerSheetFiles, "answerSheet")
   if (asReason) {
     return {
       ok: false,
@@ -141,11 +198,12 @@ export async function parseAssessmentUploadForm(
     }
   }
 
-  const questionPaper = await toValidatedUpload(
-    questionPaperFile,
-    "questionPaper"
+  const questionPaper = await Promise.all(
+    questionPaperFiles.map((file) => toValidatedUpload(file, "questionPaper"))
   )
-  const answerSheet = await toValidatedUpload(answerSheetFile, "answerSheet")
+  const answerSheet = await Promise.all(
+    answerSheetFiles.map((file) => toValidatedUpload(file, "answerSheet"))
+  )
 
   return { ok: true, questionPaper, answerSheet }
 }

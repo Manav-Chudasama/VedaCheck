@@ -12,13 +12,16 @@ import { normalizeQuestionsAndGroups } from "@/lib/assessment/normalize-groups"
 import { normalizeAssessment } from "@/lib/assessment/normalize"
 import { setJobStage, updateAssessmentJob, getAssessmentJob } from "@/lib/assessment/store"
 import type { PageRaster } from "@/lib/documents/types"
-import { rasterizeDocument } from "@/lib/documents/rasterize"
+import { rasterizeDocumentParts } from "@/lib/documents/rasterize"
 
 export type PipelineDocument = {
   data: Buffer | Uint8Array
   mimeType: string
   fileName?: string
 }
+
+/** One PDF, or one-or-more page images in order. */
+export type PipelineDocumentInput = PipelineDocument | PipelineDocument[]
 
 export type PipelineAiDeps = {
   extractQuestions: (
@@ -49,8 +52,8 @@ export type PipelineAiDeps = {
 }
 
 export type RunAssessmentPipelineOptions = {
-  questionPaper: PipelineDocument
-  answerSheet: PipelineDocument
+  questionPaper: PipelineDocumentInput
+  answerSheet: PipelineDocumentInput
   ai: PipelineAiDeps
   /** Default true — set false to skip grading stage. */
   enableGrading?: boolean
@@ -76,16 +79,16 @@ export async function runAssessmentPipeline(
     setJobStage(jobId, "reading")
 
     const [questionPaperPages, answerSheetPages] = await Promise.all([
-      rasterizeDocument({
-        data: options.questionPaper.data,
-        mimeType: options.questionPaper.mimeType,
-        fileName: options.questionPaper.fileName,
-      }),
-      rasterizeDocument({
-        data: options.answerSheet.data,
-        mimeType: options.answerSheet.mimeType,
-        fileName: options.answerSheet.fileName,
-      }),
+      rasterizeDocumentParts(
+        Array.isArray(options.questionPaper)
+          ? options.questionPaper
+          : [options.questionPaper]
+      ),
+      rasterizeDocumentParts(
+        Array.isArray(options.answerSheet)
+          ? options.answerSheet
+          : [options.answerSheet]
+      ),
     ])
 
     updateAssessmentJob(jobId, {

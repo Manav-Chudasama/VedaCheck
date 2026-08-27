@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useId, useRef, useState } from "react"
-import { FileText, Upload, X } from "lucide-react"
+import { FileText, Plus, Upload, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,25 +9,30 @@ import {
   fileTypeLabel,
   formatCompactFileSize,
   getDocumentPageCount,
-  getUploadRejectionReason,
+  isImageFile,
+  isPdfFile,
+  mergeUploadSelection,
 } from "@/lib/upload/file-constraints"
 import { cn } from "@/lib/utils"
 
 type FileDropzoneProps = {
   label: string
   labelAccent: string
-  file: File | null
-  onFileChange: (file: File | null) => void
+  files: File[]
+  onFilesChange: (files: File[]) => void
   onError?: (message: string) => void
   className?: string
 }
 
-/** Drop card: 373×179.5, rx≈19, dashed #CECECE — from upload SVGs. */
+/**
+ * Drop card: one PDF or multiple images.
+ * PDF replaces the slot; images can be added until the page limit.
+ */
 export function FileDropzone({
   label,
   labelAccent,
-  file,
-  onFileChange,
+  files,
+  onFilesChange,
   onError,
   className,
 }: FileDropzoneProps) {
@@ -35,17 +40,22 @@ export function FileDropzone({
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-  const applyFile = useCallback(
-    (next: File | undefined) => {
-      if (!next) return
-      const reason = getUploadRejectionReason(next)
-      if (reason) {
-        onError?.(reason)
+  const hasFiles = files.length > 0
+  const isPdfMode = hasFiles && files.every(isPdfFile)
+  const allowMultiple = !isPdfMode
+
+  const applyIncoming = useCallback(
+    (list: FileList | File[] | null | undefined) => {
+      if (!list || list.length === 0) return
+      const incoming = Array.from(list)
+      const result = mergeUploadSelection(files, incoming)
+      if (!result.ok) {
+        onError?.(result.message)
         return
       }
-      onFileChange(next)
+      onFilesChange(result.files)
     },
-    [onError, onFileChange]
+    [files, onError, onFilesChange]
   )
 
   const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -65,33 +75,35 @@ export function FileDropzone({
     event.preventDefault()
     event.stopPropagation()
     setIsDragging(false)
-    applyFile(event.dataTransfer.files?.[0])
+    applyIncoming(event.dataTransfer.files)
   }
+
+  const openPicker = () => inputRef.current?.click()
 
   return (
     <div
-      role={file ? undefined : "button"}
-      tabIndex={file ? undefined : 0}
-      aria-label={file ? undefined : `${label} ${labelAccent}`}
+      role={hasFiles ? undefined : "button"}
+      tabIndex={hasFiles ? undefined : 0}
+      aria-label={hasFiles ? undefined : `${label} ${labelAccent}`}
       onKeyDown={
-        file
+        hasFiles
           ? undefined
           : (event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault()
-                inputRef.current?.click()
+                openPicker()
               }
             }
       }
       onClick={() => {
-        if (!file) inputRef.current?.click()
+        if (!hasFiles) openPicker()
       }}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       className={cn(
         "relative flex min-h-[160px] flex-1 flex-col items-center justify-center rounded-[19px] border border-dashed border-dropzone-stroke bg-background px-4 py-6 shadow-[0_16px_48px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:min-h-[179px]",
-        !file && "cursor-pointer",
+        !hasFiles && "cursor-pointer",
         isDragging && "border-brand bg-brand/5 ring-2 ring-brand/25",
         className
       )}
@@ -101,23 +113,55 @@ export function FileDropzone({
         id={inputId}
         type="file"
         accept={ACCEPT_ATTR}
+        multiple={allowMultiple}
         className="sr-only"
         onChange={(event) => {
-          applyFile(event.target.files?.[0])
+          applyIncoming(event.target.files)
           event.target.value = ""
         }}
       />
 
-      {file ? (
-        <UploadedFileCard
-          key={`${file.name}-${file.size}-${file.lastModified}`}
-          file={file}
-          onRemove={() => {
-            onFileChange(null)
-            inputRef.current?.focus()
-          }}
-          onReplace={() => inputRef.current?.click()}
-        />
+      {hasFiles ? (
+        <div
+          className="flex w-full max-w-[320px] flex-col gap-2"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <ul className="flex max-h-[140px] flex-col gap-2 overflow-y-auto pr-0.5">
+            {files.map((file, index) => (
+              <li key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                <UploadedFileCard
+                  file={file}
+                  pageHint={
+                    isImageFile(file) && files.length > 1
+                      ? `Page ${index + 1}`
+                      : undefined
+                  }
+                  onRemove={() => {
+                    onFilesChange(files.filter((_, i) => i !== index))
+                  }}
+                  onReplace={
+                    isPdfMode
+                      ? () => openPicker()
+                      : undefined
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+
+          {allowMultiple ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              onClick={openPicker}
+            >
+              <Plus className="size-3.5" />
+              Add images
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <div className="flex flex-col items-center gap-2.5 text-center">
           <div className="flex size-12 items-center justify-center rounded-lg bg-icon-well text-muted-foreground">
@@ -126,27 +170,34 @@ export function FileDropzone({
           <p className="text-sm font-semibold text-foreground">
             {label} <span className="text-brand">{labelAccent}</span>
           </p>
-          <p className="text-xs text-muted-foreground">Max 10MB</p>
+          <p className="max-w-[14rem] text-xs leading-snug text-muted-foreground">
+            One PDF, or multiple page images · Max 10MB each
+          </p>
         </div>
       )}
     </div>
   )
 }
 
-/** Filled chip from `Upload Screen - filled state.svg`: #F6F6F6 pill, PDF badge, size • pages. */
 function UploadedFileCard({
   file,
+  pageHint,
   onRemove,
   onReplace,
 }: {
   file: File
+  pageHint?: string
   onRemove: () => void
-  onReplace: () => void
+  onReplace?: () => void
 }) {
   const type = fileTypeLabel(file)
   const [pageCount, setPageCount] = useState<number | null>(null)
 
   useEffect(() => {
+    if (pageHint || type !== "PDF") {
+      setPageCount(type === "PDF" ? null : 1)
+      return
+    }
     let cancelled = false
     void getDocumentPageCount(file).then((count) => {
       if (!cancelled) setPageCount(count)
@@ -154,24 +205,23 @@ function UploadedFileCard({
     return () => {
       cancelled = true
     }
-  }, [file])
+  }, [file, pageHint, type])
 
   const sizeLabel = formatCompactFileSize(file.size)
-  const pagesLabel =
-    pageCount == null
+  const pagesLabel = pageHint
+    ? pageHint
+    : pageCount == null
       ? null
       : `${pageCount} ${pageCount === 1 ? "Page" : "Pages"}`
 
   return (
-    <div
-      className="relative w-full max-w-[298px]"
-      onClick={(event) => event.stopPropagation()}
-    >
+    <div className="relative w-full">
       <button
         type="button"
-        className="flex w-full items-center gap-3 rounded-xl bg-file-chip px-3 py-3.5 text-left outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-brand/40"
+        className="flex w-full items-center gap-3 rounded-xl bg-file-chip px-3 py-3 text-left outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-brand/40"
         onClick={onReplace}
-        title="Click to replace file"
+        title={onReplace ? "Click to replace file" : undefined}
+        disabled={!onReplace}
       >
         {type === "PDF" ? (
           <PdfBadge />
@@ -195,7 +245,7 @@ function UploadedFileCard({
                 />
                 <span>{pagesLabel}</span>
               </>
-            ) : (
+            ) : type === "PDF" ? (
               <>
                 <span
                   className="inline-block size-1 shrink-0 rounded-full bg-muted-foreground"
@@ -203,7 +253,7 @@ function UploadedFileCard({
                 />
                 <span>…</span>
               </>
-            )}
+            ) : null}
           </p>
         </div>
       </button>
@@ -222,7 +272,6 @@ function UploadedFileCard({
   )
 }
 
-/** Red PDF document badge (35×40) from filled-state SVG. */
 function PdfBadge() {
   return (
     <div
